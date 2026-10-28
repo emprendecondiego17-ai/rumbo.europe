@@ -156,6 +156,10 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
 .login-story h1 { max-width: 620px; margin: 18px 0; font: 800 clamp(3rem,6vw,5.5rem)/.99 Manrope,sans-serif; color: var(--navy); letter-spacing: -.08em; }
 .login-story h1 span { color: var(--blue-2); }
 .login-story p { max-width: 535px; color: var(--muted); font-size: 1.05rem; line-height: 1.75; }
+.login-art { min-height: 235px; margin-top: 26px; border-radius: 23px; }
+.login-art .europe-map { width: 66%; max-width: 310px; }
+.login-art .eu-stars { width: 128px; height: 128px; top: 17px; right: 31px; transform: scale(.8); }
+.login-art .route-card { left: 17px; bottom: 15px; width: min(280px, 76%); padding: 13px; }
 .login-benefit { display: flex; gap: 12px; align-items: center; color: #415a78; font-size: .88rem; margin-top: 22px; }
 .login-benefit b { display: grid; place-items: center; width: 29px; height: 29px; color: var(--navy); border-radius: 10px; background: var(--gold); }
 .auth-card { background: white; padding: 29px; border: 1px solid #dce6f2; border-radius: 25px; box-shadow: var(--shadow); }

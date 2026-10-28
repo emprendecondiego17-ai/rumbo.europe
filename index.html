@@ -5,50 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08275c">
   <meta name="description" content="Rumbo te ayuda a preparar una experiencia laboral en Europa.">
-  <title>Rumbo — Acceso</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="script.js" defer></script>
+  <title>Rumbo — Crea tu cuenta</title>
+  <link rel="stylesheet" href="styles.css?v=3">
+  <script src="script.js?v=3" defer></script>
 </head>
 <body class="login-page">
   <header class="wrap login-header">
     <a class="brand" href="index.html" aria-label="Rumbo, inicio"><span class="brand-mark">✦</span><span>rumbo</span></a>
-    <span class="pill">PROTOTIPO ACADÉMICO</span>
+    <span class="pill">TU PRÓXIMO PASO EN EUROPA</span>
   </header>
   <main class="wrap login-layout">
     <section class="login-story">
-      <span class="eyebrow">Tu próximo paso, más cerca</span>
+      <span class="eyebrow">Empleo y nuevas experiencias</span>
       <h1>Tu talento puede encontrar <span>un nuevo rumbo.</span></h1>
-      <p>Una idea para conectar personas con oportunidades laborales en Europa y acompañarles en la preparación del viaje, el papeleo y el alojamiento.</p>
-      <div class="login-benefit"><b>✓</b><span>Una propuesta para distintos sectores y perfiles.</span></div>
-      <div class="login-benefit"><b>✓</b><span>Servicios y precios explicados con claridad.</span></div>
-      <div class="login-benefit"><b>✓</b><span>Ofertas externas enlazadas a su fuente original.</span></div>
+      <p>Conoce oportunidades laborales en Europa y prepara tu próximo paso con información clara sobre búsqueda de empleo, alojamiento y traslado.</p>
+      <div class="login-benefit"><b>✓</b><span>Explora distintos países y sectores.</span></div>
+      <div class="login-benefit"><b>✓</b><span>Compara los servicios y sus precios.</span></div>
+      <div class="login-benefit"><b>✓</b><span>Consulta ofertas enlazadas a su fuente original.</span></div>
+      <div class="hero-visual login-art" aria-label="Ilustración de una ruta de trabajo por Europa">
+        <div class="eu-stars" aria-hidden="true"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+        <svg class="europe-map" viewBox="0 0 480 330" role="img" aria-label="Mapa esquemático de Europa">
+          <path d="m72 73 24-22 26 6 16-16 28 10 8 24 23 4 8 25 34 3 11 20 28-1 8 24-18 10-4 25-25 8-7 28-28-4-17 18-23-10-11-30-22-8-13-28-21-5-18-27-29-6-14-24-30-7-7-25z" fill="#d7e6fb" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+          <path d="m250 81 31-19 28 10 22-9 24 13 10 27 33 5 12 24-19 17-5 26-27 1-12 21-24-7-5-28-24-6-8-22-25-4-11-19z" fill="#eaf2ff" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+          <path d="m105 187 18 11 8 26-16 22-21-6-7-22 9-24zM191 210l17 6 9 20-15 22-18-3-6-19z" fill="#c6dcf7" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M125 192 C185 128 228 180 270 138 S342 101 390 124" fill="none" stroke="#ffd43b" stroke-width="5" stroke-dasharray="9 9" stroke-linecap="round"/>
+          <circle cx="125" cy="192" r="11" fill="#ffd43b" stroke="#fff" stroke-width="5"/><circle cx="390" cy="124" r="11" fill="#ffd43b" stroke="#fff" stroke-width="5"/>
+        </svg>
+        <div class="route-card"><div class="route-card-top"><span>RUMBO · EUROPA</span><span>✦</span></div><strong>Un destino que encaje contigo</strong><small>Tu sector · tus prioridades · tu ritmo</small><div class="route-line"></div></div>
+      </div>
     </section>
+
     <section class="auth-card" aria-labelledby="auth-heading">
-      <h2 id="auth-heading">Accede a Rumbo</h2>
-      <p>Elige cómo quieres usar la demostración.</p>
-      <form id="auth-form">
+      <span class="eyebrow">Empieza en un minuto</span>
+      <h2 id="auth-heading">Crea tu cuenta</h2>
+      <p id="auth-subtitle">Elige tu perfil y completa tus datos para entrar.</p>
+      <form id="auth-form" data-mode="signup">
         <div class="role-select" role="radiogroup" aria-label="Tipo de cuenta">
           <label class="role-option"><input type="radio" name="role" value="candidato" checked><span><strong>Busco empleo</strong>Quiero encontrar trabajo</span></label>
           <label class="role-option"><input type="radio" name="role" value="empresa"><span><strong>Soy empresa</strong>Quiero publicar una oferta</span></label>
         </div>
         <div class="auth-fields">
-          <div id="name-field" hidden><label class="sr-only" for="name">Nombre</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Tu nombre"></div>
+          <div id="name-field"><label class="sr-only" for="name">Nombre</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Tu nombre" required></div>
           <div><label class="sr-only" for="email">Correo electrónico</label><input id="email" name="email" type="email" autocomplete="email" placeholder="Correo electrónico" required></div>
-          <div><label class="sr-only" for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Contraseña" minlength="6" required></div>
+          <div><label class="sr-only" for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="new-password" placeholder="Crea una contraseña (mínimo 6 caracteres)" minlength="6" required></div>
+          <div id="confirm-field"><label class="sr-only" for="confirm-password">Repite la contraseña</label><input id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" placeholder="Repite la contraseña" minlength="6" required></div>
         </div>
-        <button class="button" id="auth-submit" type="submit">Entrar en la demo <span aria-hidden="true">→</span></button>
-        <p class="auth-switch"><span id="auth-switch-text">¿Todavía no tienes cuenta?</span> <button class="auth-toggle" type="button" data-auth-mode="signup">Crear cuenta</button><button class="auth-toggle" type="button" data-auth-mode="login" hidden>Iniciar sesión</button></p>
+        <button class="button" id="auth-submit" type="submit">Crear cuenta y continuar <span aria-hidden="true">→</span></button>
+        <p class="auth-switch"><span id="auth-switch-text">¿Ya tienes cuenta?</span> <button class="auth-toggle" type="button" data-auth-mode="login">Iniciar sesión</button><button class="auth-toggle" type="button" data-auth-mode="signup" hidden>Crear cuenta</button></p>
         <p class="status-message" id="auth-status" role="status" aria-live="polite"></p>
       </form>
-      <div class="divider">o continúa con</div>
+      <div class="divider">o regístrate con</div>
       <div class="social-row">
-        <button class="social-btn" type="button" data-social-demo="Google">G&nbsp; Google</button>
-        <button class="social-btn" type="button" data-social-demo="Apple">●&nbsp; Apple</button>
+        <button class="social-btn" type="button" data-social-demo="Google">G&nbsp; Google · próximamente</button>
+        <button class="social-btn" type="button" data-social-demo="Apple">●&nbsp; Apple · próximamente</button>
       </div>
-      <p class="auth-footnote">Esta es una maqueta: no escribas una contraseña real. No se guardan ni envían tus datos. Google y Apple aún no están conectados.</p>
+      <p class="auth-footnote">Cuenta de demostración para este navegador. No uses una contraseña real ni la que utilizas en otros servicios. Google y Apple aún requieren configuración.</p>
     </section>
   </main>
-  <footer class="wrap footer"><div class="footer-inner"><span>© 2026 Rumbo · Proyecto universitario</span><span>Acceso de demostración</span></div></footer>
+  <footer class="wrap footer"><div class="footer-inner"><span>© 2026 Rumbo · Proyecto universitario</span><span>Prototipo de demostración</span></div></footer>
 </body>
 </html>
 
