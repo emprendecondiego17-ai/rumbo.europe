@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Información para empresas que quieren publicar ofertas de trabajo en Rumbo.">
+  <title>Empresas | Rumbo</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html#inicio">Rumbo<span>.</span></a>
+      <nav aria-label="Navegación principal">
+        <a href="index.html#inicio">Inicio</a>
+        <a href="index.html#paquetes">Paquetes</a>
+        <a href="#publicar">Publicar una oferta</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="employer-section" id="publicar">
+      <div class="container employer-layout">
+        <div class="section-heading employer-heading">
+          <p class="eyebrow">Espacio para empresas</p>
+          <h2>Publica una oferta de trabajo</h2>
+          <p>Completa los datos principales para preparar una vista previa. En una versión completa, el equipo de Rumbo podría revisar la oferta antes de publicarla.</p>
+        </div>
+
+        <form class="employer-form" id="offer-form">
+          <div class="form-row">
+            <div>
+              <label class="field-label" for="company-name">Nombre de la empresa</label>
+              <input class="field-control" type="text" id="company-name" required>
+            </div>
+            <div>
+              <label class="field-label" for="contact-email">Correo de contacto</label>
+              <input class="field-control" type="email" id="contact-email" placeholder="nombre@empresa.com" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label class="field-label" for="job-title">Puesto de trabajo</label>
+              <input class="field-control" type="text" id="job-title" placeholder="Ej.: técnico/a de mantenimiento" required>
+            </div>
+            <div>
+              <label class="field-label" for="job-country">País del empleo</label>
+              <input class="field-control" type="text" id="job-country" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label class="field-label" for="job-sector">Sector</label>
+              <input class="field-control" type="text" id="job-sector" placeholder="Ej.: tecnología, agricultura, sanidad" required>
+            </div>
+            <div>
+              <label class="field-label" for="job-duration">Duración del contrato</label>
+              <select class="field-control" id="job-duration" required>
+                <option value="">Selecciona una opción</option>
+                <option value="Corta duración (3–6 meses)">Corta duración (3–6 meses)</option>
+                <option value="Larga duración (más de 6 meses)">Larga duración (más de 6 meses)</option>
+                <option value="Otra duración">Otra duración</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label class="field-label" for="job-housing">¿Hay alojamiento disponible?</label>
+              <select class="field-control" id="job-housing" required>
+                <option value="">Selecciona una opción</option>
+                <option value="Sí">Sí</option>
+                <option value="No">No</option>
+                <option value="Por confirmar">Por confirmar</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="job-salary">Salario o rango salarial <span>(opcional)</span></label>
+              <input class="field-control" type="text" id="job-salary" placeholder="Indica moneda y periodo">
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label" for="job-description">Descripción de la oferta</label>
+            <textarea class="field-control text-area" id="job-description" rows="5" placeholder="Describe las tareas principales y los requisitos del puesto." required></textarea>
+          </div>
+
+          <button class="button submit-button" type="submit">Previsualizar oferta <span aria-hidden="true">→</span></button>
+          <p class="privacy-note">Prototipo académico: los datos no se envían ni se publican.</p>
+        </form>
+
+        <section class="offer-preview" id="offer-preview" hidden aria-live="polite">
+          <p class="eyebrow">Vista previa · pendiente de revisión</p>
+          <h3 id="preview-title"></h3>
+          <p class="preview-meta" id="preview-meta"></p>
+          <p class="preview-housing" id="preview-housing"></p>
+          <p class="preview-salary" id="preview-salary"></p>
+          <p id="preview-description"></p>
+          <p class="result-note">Esta oferta solo se muestra en tu navegador. Aún no está publicada.</p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <a class="logo" href="index.html#inicio">Rumbo<span>.</span></a>
+      <p>Prototipo académico. Las ofertas no se publican realmente.</p>
+    </div>
+  </footer>
+</body>
+</html>
