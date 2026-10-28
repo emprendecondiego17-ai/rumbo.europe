@@ -88,6 +88,20 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
 .why-point .tile-icon { flex: 0 0 42px; width: 42px; height: 42px; margin: 0; }
 .why-point h3 { font-size: 1rem; margin: 0 0 5px; }
 .why-point p { color: var(--muted); font-size: .83rem; line-height: 1.55; margin: 0; }
+.home-sponsors { padding-top: 54px; }
+.sponsor-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px; }
+.sponsor-card { min-width: 0; padding: 21px; display: flex; flex-direction: column; align-items: flex-start; gap: 11px; }
+.sponsor-card-top { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sponsor-mark { flex: 0 0 46px; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 15px; color: var(--navy); background: var(--gold); font: 800 1rem Manrope, sans-serif; }
+.sponsor-card h3 { margin: 2px 0 0; }
+.sponsor-card p { margin: 0; color: var(--muted); font-size: .84rem; line-height: 1.55; }
+.sponsor-card .sponsor-role { color: var(--ink); font-weight: 700; }
+.sponsor-card .text-link { font-size: .82rem; margin-top: auto; }
+.sponsor-card small { color: var(--muted); font-size: .7rem; line-height: 1.45; }
+.sponsor-empty { display: flex; justify-content: space-between; align-items: center; gap: 22px; padding: 23px 25px; border: 1px dashed #b9cce4; border-radius: 18px; background: #fff; }
+.sponsor-empty h3 { margin: 10px 0 5px; }
+.sponsor-empty p { margin: 0; color: var(--muted); font-size: .85rem; }
+.sponsor-empty .button { flex: 0 0 auto; }
 .intro-banner { padding: 35px; background: linear-gradient(120deg, #0b2e68, #174f9d); color: white; overflow: hidden; position: relative; }
 .intro-banner:after { content: "✦ ✦ ✦"; position: absolute; font-size: 5rem; color: #ffd43b45; right: 6%; top: 17%; transform: rotate(-12deg); }
 .intro-banner h2 { color: white; max-width: 650px; margin: 10px 0 11px; }
@@ -238,6 +252,7 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
 @media (max-width: 850px) {
   .hero, .login-layout { grid-template-columns: 1fr; }
   .interactive-map { grid-template-columns: 1fr; }
+  .sponsor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .map-sidebar { padding: 4px; }
   .map-sidebar .button { width: auto; }
   .hero { gap: 25px; }
@@ -279,6 +294,8 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
   .table-scroll { overflow-x: auto; }
   .offer-card { padding: 18px; }
   .offer-bottom { align-items: flex-start; flex-direction: column; }
+  .sponsor-grid { grid-template-columns: 1fr; }
+  .sponsor-empty { align-items: flex-start; flex-direction: column; padding: 20px; }
   .footer-inner { align-items: flex-start; flex-direction: column; }
   .footer-note { text-align: left; }
 }

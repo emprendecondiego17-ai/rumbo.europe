@@ -269,7 +269,35 @@
     }).join("");
     if (sponsorEmpty) sponsorEmpty.hidden = sponsored.length > 0;
 
+    renderHomeSponsors();
     if (document.getElementById("map-country-select")) updateMapCountry(selectedCountry || "cualquiera");
+  }
+
+  function renderHomeSponsors() {
+    var container = document.getElementById("home-sponsored-companies");
+    var empty = document.getElementById("home-sponsors-empty");
+    if (!container) return;
+
+    var seenCompanies = {};
+    var sponsored = getDemoOffers().filter(function (offer) {
+      var companyKey = String(offer.company || "").trim().toLowerCase();
+      if (!offer.sponsored || !companyKey || seenCompanies[companyKey]) return false;
+      seenCompanies[companyKey] = true;
+      return true;
+    });
+
+    container.innerHTML = sponsored.map(function (offer) {
+      var initials = String(offer.company || "R").trim().split(/\s+/).slice(0, 2).map(function (word) { return word.charAt(0); }).join("").toUpperCase();
+      return '<article class="surface sponsor-card">' +
+        '<div class="sponsor-card-top"><span class="sponsor-mark" aria-hidden="true">' + escapeHtml(initials || "R") + '</span><span class="pill gold">Patrocinado · demostración</span></div>' +
+        '<h3>' + escapeHtml(offer.company) + '</h3>' +
+        '<p class="sponsor-role">' + escapeHtml(offer.title) + '</p>' +
+        '<p class="sponsor-location">' + escapeHtml(offer.country) + (offer.location ? ' · ' + escapeHtml(offer.location) : '') + ' · ' + escapeHtml(offer.sectorLabel) + '</p>' +
+        '<a class="text-link" href="recomendadas.html#mapa">Ver ofertas de esta empresa <span aria-hidden="true">→</span></a>' +
+        '<small>Patrocinio de demostración; no confirma una relación comercial real.</small>' +
+        '</article>';
+    }).join("");
+    if (empty) empty.hidden = sponsored.length > 0;
   }
 
   function updateMapCountry(countryName) {
