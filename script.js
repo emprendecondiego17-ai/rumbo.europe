@@ -2,10 +2,11 @@
   "use strict";
 
   var ACCOUNT_KEY = "rumboDemoAccounts";
+  var DEMO_OFFERS_KEY = "rumboDemoOffers";
   var HASH_ITERATIONS = 120000;
 
-  // Selección de ofertas verificadas manualmente; actualizar esta lista con regularidad.
-  var jobOffers = [
+  // Estas vacantes se seleccionaron de fuentes externas. La disponibilidad puede cambiar.
+  var curatedOffers = [
     {
       company: "Racemark International GmbH",
       title: "Operario/a de producción",
@@ -17,7 +18,7 @@
       durationLabel: "Contrato temporal de 6 meses",
       salary: "30.344,64 € brutos/año (según el anuncio)",
       housing: "El anuncio no indica alojamiento",
-      deadline: "Publicado hace poco y actualizado por la Agencia Federal de Empleo; confirma que sigue abierto.",
+      deadline: "Publicado y actualizado por la Agencia Federal de Empleo; confirma que sigue abierto.",
       details: "Apoyo en fabricación, lectura de órdenes de trabajo, manejo de máquina y control de calidad. Se pide experiencia inicial en producción, conocimientos básicos de ordenador y alemán. Jornada completa; posibilidad de prórroga.",
       url: "https://www.arbeitsagentur.de/jobsuche/jobdetail/10001-1003559188-S",
       source: "Agencia Federal de Empleo de Alemania"
@@ -78,7 +79,7 @@
       sector: "construccion",
       sectorLabel: "Construcción y oficios",
       durations: ["corta", "larga"],
-      durationLabel: "El empleador ofrece contratos temporales o indefinidos",
+      durationLabel: "Contratos temporales o indefinidos",
       salary: "275–295 NOK brutos/hora",
       housing: "Ayuda para encontrar alojamiento o alojamiento con coste",
       deadline: "Solicitudes hasta el 31/12/2026, según el anuncio consultado.",
@@ -88,25 +89,232 @@
     }
   ];
 
+  // Puntos representativos; el mapa es esquemático y no dibuja fronteras exactas.
+  var europeanCountries = [
+    { name: "Albania", code: "AL", x: 414, y: 326 },
+    { name: "Alemania", code: "DE", x: 323, y: 230 },
+    { name: "Andorra", code: "AD", x: 225, y: 323 },
+    { name: "Armenia", code: "AM", x: 506, y: 285 },
+    { name: "Austria", code: "AT", x: 347, y: 265 },
+    { name: "Azerbaiyán", code: "AZ", x: 526, y: 255 },
+    { name: "Bélgica", code: "BE", x: 284, y: 236 },
+    { name: "Bielorrusia", code: "BY", x: 430, y: 204 },
+    { name: "Bosnia y Herzegovina", code: "BA", x: 389, y: 298 },
+    { name: "Bulgaria", code: "BG", x: 435, y: 294 },
+    { name: "Chipre", code: "CY", x: 483, y: 367 },
+    { name: "Ciudad del Vaticano", code: "VA", x: 344, y: 312 },
+    { name: "Croacia", code: "HR", x: 374, y: 285 },
+    { name: "Dinamarca", code: "DK", x: 322, y: 177 },
+    { name: "Eslovaquia", code: "SK", x: 373, y: 250 },
+    { name: "Eslovenia", code: "SI", x: 356, y: 278 },
+    { name: "España", code: "ES", x: 196, y: 317 },
+    { name: "Estonia", code: "EE", x: 435, y: 150 },
+    { name: "Finlandia", code: "FI", x: 410, y: 92 },
+    { name: "Francia", code: "FR", x: 253, y: 264 },
+    { name: "Georgia", code: "GE", x: 514, y: 273 },
+    { name: "Grecia", code: "GR", x: 446, y: 339 },
+    { name: "Hungría", code: "HU", x: 393, y: 264 },
+    { name: "Irlanda", code: "IE", x: 182, y: 202 },
+    { name: "Islandia", code: "IS", x: 111, y: 83 },
+    { name: "Italia", code: "IT", x: 350, y: 337 },
+    { name: "Kosovo", code: "XK", x: 412, y: 307 },
+    { name: "Letonia", code: "LV", x: 432, y: 170 },
+    { name: "Liechtenstein", code: "LI", x: 319, y: 267 },
+    { name: "Lituania", code: "LT", x: 425, y: 188 },
+    { name: "Luxemburgo", code: "LU", x: 298, y: 250 },
+    { name: "Macedonia del Norte", code: "MK", x: 423, y: 316 },
+    { name: "Malta", code: "MT", x: 380, y: 391 },
+    { name: "Moldavia", code: "MD", x: 457, y: 249 },
+    { name: "Mónaco", code: "MC", x: 284, y: 286 },
+    { name: "Montenegro", code: "ME", x: 402, y: 315 },
+    { name: "Noruega", code: "NO", x: 319, y: 94 },
+    { name: "Países Bajos", code: "NL", x: 294, y: 215 },
+    { name: "Polonia", code: "PL", x: 365, y: 222 },
+    { name: "Portugal", code: "PT", x: 164, y: 319 },
+    { name: "Reino Unido", code: "UK", x: 215, y: 201 },
+    { name: "República Checa", code: "CZ", x: 343, y: 241 },
+    { name: "Rumanía", code: "RO", x: 424, y: 266 },
+    { name: "Rusia", code: "RU", x: 531, y: 180 },
+    { name: "San Marino", code: "SM", x: 360, y: 309 },
+    { name: "Serbia", code: "RS", x: 407, y: 286 },
+    { name: "Suecia", code: "SE", x: 366, y: 100 },
+    { name: "Suiza", code: "CH", x: 306, y: 266 },
+    { name: "Turquía", code: "TR", x: 484, y: 320 },
+    { name: "Ucrania", code: "UA", x: 474, y: 222 }
+  ];
+
   function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, function (character) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[character];
     });
   }
 
+  function readJson(key, fallback) {
+    try {
+      var value = JSON.parse(localStorage.getItem(key) || "null");
+      return value == null ? fallback : value;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function getDemoOffers() {
+    var offers = readJson(DEMO_OFFERS_KEY, []);
+    return Array.isArray(offers) ? offers.filter(function (offer) {
+      return offer && typeof offer === "object" && offer.isDemo === true && offer.country && offer.title;
+    }).map(function (offer) {
+      var email = String(offer.contactEmail || "").trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
+      offer.url = "mailto:" + encodeURIComponent(email).replace(/%40/gi, "@");
+      offer.source = "Contacto directo";
+      return offer;
+    }).filter(Boolean) : [];
+  }
+
+  function getAllOffers() {
+    return curatedOffers.concat(getDemoOffers());
+  }
+
   function offerCardHtml(offer, badge) {
+    var contactLabel = offer.isDemo ? "Contactar con la empresa" : "Ver oferta en " + offer.source + " ↗";
+    var tags = '<div class="offer-meta"><span>' + escapeHtml(offer.sectorLabel) + '</span><span>' + escapeHtml(offer.durationLabel) + '</span></div>';
     return '<article class="surface offer-card">' +
       '<div class="offer-head"><div><h3>' + escapeHtml(offer.title) + '</h3>' +
-      '<div class="offer-company">' + escapeHtml(offer.company) + ' · ' + escapeHtml(offer.location) + '</div></div>' +
+      '<div class="offer-company">' + escapeHtml(offer.company) + ' · ' + escapeHtml(offer.location || "Ubicación no indicada") + '</div></div>' +
       '<span class="pill">' + escapeHtml(offer.country) + '</span></div>' +
-      '<div class="offer-meta"><span>' + escapeHtml(offer.sectorLabel) + '</span><span>' + escapeHtml(offer.durationLabel) + '</span></div>' +
+      tags +
       '<p class="offer-details">' + escapeHtml(offer.details) + '</p>' +
-      '<p class="offer-details"><strong>Alojamiento indicado por la empresa:</strong> ' + escapeHtml(offer.housing) +
+      '<p class="offer-details"><strong>Alojamiento indicado:</strong> ' + escapeHtml(offer.housing) +
       '<br><strong>Condición/plazo:</strong> ' + escapeHtml(offer.deadline) + '</p>' +
-      (badge ? '<span class="pill gold" style="align-self:flex-start;margin-bottom:12px">' + escapeHtml(badge) + '</span>' : '') +
-      '<div class="offer-bottom"><strong>' + escapeHtml(offer.salary) + '</strong>' +
-      '<a href="' + escapeHtml(offer.url) + '" target="_blank" rel="noopener noreferrer">Ver oferta en ' + escapeHtml(offer.source) + ' ↗</a></div>' +
+      (offer.isDemo ? '<p class="offer-details"><strong>Servicio elegido:</strong> ' + escapeHtml(offer.packageLabel || "Publicación estándar") + (offer.sponsored ? ' · extra de promoción indicado' : '') + '</p>' : '') +
+      (offer.isDemo ? '<span class="pill demo-badge">Anuncio de demostración · no verificado</span>' : '') +
+      (badge ? '<span class="pill gold offer-badge">' + escapeHtml(badge) + '</span>' : '') +
+      '<div class="offer-bottom"><strong>' + escapeHtml(offer.salary || "Salario no indicado") + '</strong>' +
+      '<a href="' + escapeHtml(offer.url) + '" ' + (offer.isDemo ? '' : 'target="_blank" rel="noopener noreferrer"') + '>' + escapeHtml(contactLabel) + '</a></div>' +
+      (offer.isDemo ? '<button class="remove-demo-offer" type="button" data-remove-offer="' + escapeHtml(offer.id) + '">Retirar de esta demostración</button>' : '') +
       '</article>';
+  }
+
+  function fillCountrySelect(select, includeAny) {
+    if (!select) return;
+    var placeholder = select.options[0];
+    var placeholderText = placeholder ? placeholder.textContent : "Selecciona un país";
+    var placeholderValue = placeholder ? placeholder.value : "";
+    select.innerHTML = "";
+    select.appendChild(new Option(placeholderText, placeholderValue));
+    if (includeAny) select.appendChild(new Option("Cualquier país / abierto a Europa", "cualquiera"));
+    europeanCountries.forEach(function (country) {
+      select.appendChild(new Option(country.name, country.name));
+    });
+  }
+
+  function sectorDetails(label) {
+    var value = String(label || "").toLowerCase();
+    if (value === "agro" || /agric|medioambiente|acuicultura/.test(value)) return { key: "agro", label: "Agricultura y medioambiente" };
+    if (/industria|fabricaci|producci|montaje/.test(value)) return { key: "industria", label: "Industria y fabricación" };
+    if (/construcci|oficios/.test(value)) return { key: "construccion", label: "Construcción y oficios" };
+    if (/tecnolog|inform.tica/.test(value)) return { key: "tecnologia", label: "Tecnología e informática" };
+    if (/sanidad|cuidados/.test(value)) return { key: "sanidad", label: "Sanidad y cuidados" };
+    if (/educaci/.test(value)) return { key: "educacion", label: "Educación" };
+    if (/log.stica|transporte/.test(value)) return { key: "logistica", label: "Logística y transporte" };
+    if (/comercio|ventas/.test(value)) return { key: "comercio", label: "Comercio y ventas" };
+    if (/hosteler|turismo|ocio/.test(value)) return { key: "hosteleria", label: "Hostelería, turismo y ocio" };
+    if (/administraci|atenci.n al cliente/.test(value)) return { key: "administracion", label: "Administración y atención al cliente" };
+    if (/energ.a/.test(value)) return { key: "energia", label: "Energía" };
+    return { key: "otro", label: "Otro sector" };
+  }
+
+  function durationDetails(value, label) {
+    var duration = String(value || "");
+    var durationLabel = String(label || duration);
+    if (duration === "corta" || /temporal|3.?6|estacional|temporada/i.test(durationLabel)) return { values: ["corta"], label: durationLabel };
+    return { values: ["larga"], label: durationLabel };
+  }
+
+  function createId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+    return "demo-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  }
+
+  function renderCollections(selectedCountry) {
+    var offers = getAllOffers();
+    var allContainer = document.getElementById("all-offers");
+    if (allContainer) allContainer.innerHTML = offers.map(function (offer) {
+      return offerCardHtml(offer, offer.isDemo ? "Oferta enviada desde este navegador" : "");
+    }).join("");
+
+    var sponsored = offers.filter(function (offer) { return offer.isDemo && offer.sponsored; });
+    var sponsorList = document.getElementById("paid-sponsored-offers");
+    var sponsorEmpty = document.getElementById("no-paid-sponsors");
+    if (sponsorList) sponsorList.innerHTML = sponsored.map(function (offer) {
+      return offerCardHtml(offer, "Patrocinado · demostración");
+    }).join("");
+    if (sponsorEmpty) sponsorEmpty.hidden = sponsored.length > 0;
+
+    if (document.getElementById("map-country-select")) updateMapCountry(selectedCountry || "cualquiera");
+  }
+
+  function updateMapCountry(countryName) {
+    var select = document.getElementById("map-country-select");
+    var result = document.getElementById("map-country-result");
+    var list = document.getElementById("map-offers");
+    var pins = document.querySelectorAll(".map-pin");
+    var offers = getAllOffers();
+    var selected = countryName === "cualquiera" ? offers : offers.filter(function (offer) { return offer.country === countryName; });
+    if (select && select.value !== countryName) select.value = countryName;
+
+    pins.forEach(function (pin) {
+      var pinCountry = pin.getAttribute("data-country");
+      pin.classList.toggle("selected", pinCountry === countryName);
+      pin.classList.toggle("has-offers", offers.some(function (offer) { return offer.country === pinCountry; }));
+    });
+
+    if (result) {
+      var heading = result.querySelector("strong");
+      var message = result.querySelector("span");
+      if (heading) heading.textContent = countryName === "cualquiera" ? "Toda Europa" : countryName;
+      if (message) message.textContent = countryName === "cualquiera"
+        ? offers.length + (offers.length === 1 ? " oferta disponible en la demostración." : " ofertas disponibles en la demostración.")
+        : (selected.length ? selected.length + (selected.length === 1 ? " oferta para este país." : " ofertas para este país.") : "Aún no tenemos ofertas de demostración en este país.");
+    }
+
+    if (list) {
+      list.innerHTML = selected.length ? selected.map(function (offer) {
+        return offerCardHtml(offer, offer.isDemo ? "Oferta de demostración" : "Oferta disponible");
+      }).join("") : '<div class="notice map-empty"><strong>Aún no tenemos ofertas para ' + escapeHtml(countryName) + '.</strong><br>Prueba otro país o revisa el portal oficial de empleo europeo en <a href="https://eures.europa.eu/index_es" target="_blank" rel="noopener noreferrer">EURES ↗</a>.</div>';
+    }
+  }
+
+  function initializeMap() {
+    var pinsContainer = document.getElementById("map-country-pins");
+    var select = document.getElementById("map-country-select");
+    if (!pinsContainer || !select) return;
+    fillCountrySelect(select, false);
+    europeanCountries.forEach(function (country) {
+      var pin = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      pin.setAttribute("class", "map-pin");
+      pin.setAttribute("transform", "translate(" + country.x + " " + country.y + ")");
+      pin.setAttribute("tabindex", "0");
+      pin.setAttribute("role", "button");
+      pin.setAttribute("aria-label", "Ver ofertas de " + country.name);
+      pin.setAttribute("data-country", country.name);
+      pin.innerHTML = '<title>Ver ofertas de ' + escapeHtml(country.name) + '</title><circle r="12"></circle><text y="3">' + escapeHtml(country.code) + '</text>';
+      pinsContainer.appendChild(pin);
+    });
+
+    select.addEventListener("change", function () { updateMapCountry(select.value); });
+    pinsContainer.addEventListener("click", function (event) {
+      var pin = event.target.closest(".map-pin");
+      if (pin) updateMapCountry(pin.getAttribute("data-country"));
+    });
+    pinsContainer.addEventListener("keydown", function (event) {
+      var pin = event.target.closest(".map-pin");
+      if (pin && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        updateMapCountry(pin.getAttribute("data-country"));
+      }
+    });
+    updateMapCountry("cualquiera");
   }
 
   var menuButtons = document.querySelectorAll(".menu-toggle");
@@ -120,32 +328,36 @@
     });
   });
 
-  var allOffers = document.getElementById("all-offers");
-  if (allOffers) {
-    allOffers.innerHTML = jobOffers.map(function (offer) {
-      return offerCardHtml(offer, "");
-    }).join("");
-  }
+  fillCountrySelect(document.getElementById("country"), !!document.getElementById("survey-form"));
+  fillCountrySelect(document.querySelector('#offer-form select[name="country"]'), false);
+  initializeMap();
+  renderCollections("cualquiera");
+
+  document.addEventListener("click", function (event) {
+    var removeButton = event.target.closest("[data-remove-offer]");
+    if (!removeButton) return;
+    var id = removeButton.getAttribute("data-remove-offer");
+    var remaining = getDemoOffers().filter(function (offer) { return offer.id !== id; });
+    try {
+      localStorage.setItem(DEMO_OFFERS_KEY, JSON.stringify(remaining));
+      renderCollections(document.getElementById("map-country-select") ? document.getElementById("map-country-select").value : "cualquiera");
+    } catch (error) {
+      window.alert("No se pudo retirar la oferta en este navegador.");
+    }
+  });
 
   function getAccounts() {
-    try {
-      return JSON.parse(localStorage.getItem(ACCOUNT_KEY) || "[]");
-    } catch (error) {
-      return [];
-    }
+    var accounts = readJson(ACCOUNT_KEY, []);
+    return Array.isArray(accounts) ? accounts : [];
   }
 
   function bytesToHex(bytes) {
-    return Array.from(bytes).map(function (byte) {
-      return byte.toString(16).padStart(2, "0");
-    }).join("");
+    return Array.from(bytes).map(function (byte) { return byte.toString(16).padStart(2, "0"); }).join("");
   }
 
   function hexToBytes(hex) {
     var bytes = new Uint8Array(hex.length / 2);
-    for (var index = 0; index < bytes.length; index += 1) {
-      bytes[index] = parseInt(hex.slice(index * 2, index * 2 + 2), 16);
-    }
+    for (var index = 0; index < bytes.length; index += 1) bytes[index] = parseInt(hex.slice(index * 2, index * 2 + 2), 16);
     return bytes;
   }
 
@@ -156,25 +368,16 @@
   }
 
   async function passwordHash(password, salt) {
-    if (!window.crypto || !window.crypto.subtle) {
-      throw new Error("Para crear una cuenta de prueba, abre la web publicada con https.");
-    }
+    if (!window.crypto || !window.crypto.subtle) throw new Error("Para crear una cuenta de prueba, abre la web publicada con https.");
     var key = await window.crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
     var bits = await window.crypto.subtle.deriveBits({
-      name: "PBKDF2",
-      salt: hexToBytes(salt),
-      iterations: HASH_ITERATIONS,
-      hash: "SHA-256"
+      name: "PBKDF2", salt: hexToBytes(salt), iterations: HASH_ITERATIONS, hash: "SHA-256"
     }, key, 256);
     return bytesToHex(new Uint8Array(bits));
   }
 
   function goToPortal(account) {
-    try {
-      sessionStorage.setItem("rumboDemoProfile", JSON.stringify({ name: account.name, email: account.email, role: account.role }));
-    } catch (error) {
-      // La navegación de demostración sigue funcionando si el navegador bloquea la sesión.
-    }
+    try { sessionStorage.setItem("rumboDemoProfile", JSON.stringify({ name: account.name, email: account.email, role: account.role })); } catch (error) { /* La demo no depende de la sesión. */ }
     window.location.href = account.role === "empresa" ? "empresas.html" : "candidatos.html";
   }
 
@@ -195,16 +398,12 @@
       confirmField.hidden = !signup;
       confirmInput.required = signup;
       document.getElementById("auth-heading").textContent = signup ? "Crea tu cuenta" : "Inicia sesión";
-      document.getElementById("auth-subtitle").textContent = signup
-        ? "Elige tu perfil y completa tus datos para entrar."
-        : "Escribe el correo y la contraseña que registraste en este navegador.";
+      document.getElementById("auth-subtitle").textContent = signup ? "Elige tu perfil y completa tus datos para entrar." : "Escribe el correo y la contraseña que registraste en este navegador.";
       document.getElementById("auth-switch-text").textContent = signup ? "¿Ya tienes cuenta?" : "¿Todavía no tienes cuenta?";
-      submit.innerHTML = signup ? "Crear cuenta y continuar <span aria-hidden=\"true\">→</span>" : "Iniciar sesión <span aria-hidden=\"true\">→</span>";
+      submit.innerHTML = signup ? 'Crear cuenta y continuar <span aria-hidden="true">→</span>' : 'Iniciar sesión <span aria-hidden="true">→</span>';
       document.getElementById("password").autocomplete = signup ? "new-password" : "current-password";
       document.getElementById("auth-status").textContent = "";
-      document.querySelectorAll("[data-auth-mode]").forEach(function (item) {
-        item.hidden = item.dataset.authMode === mode;
-      });
+      document.querySelectorAll("[data-auth-mode]").forEach(function (item) { item.hidden = item.dataset.authMode === mode; });
     });
   });
 
@@ -227,9 +426,7 @@
           var name = document.getElementById("name").value.trim();
           var confirmation = document.getElementById("confirm-password").value;
           if (password !== confirmation) throw new Error("Las contraseñas no coinciden. Comprueba las dos casillas.");
-          if (accounts.some(function (item) { return item.email === email; })) {
-            throw new Error("Ya existe una cuenta de prueba con ese correo en este navegador. Inicia sesión.");
-          }
+          if (accounts.some(function (item) { return item.email === email; })) throw new Error("Ya existe una cuenta de prueba con ese correo en este navegador. Inicia sesión.");
           var salt = createSalt();
           account = { name: name, email: email, role: role, salt: salt, passwordHash: await passwordHash(password, salt) };
           accounts.push(account);
@@ -245,7 +442,7 @@
         document.getElementById("password").value = "";
         var confirmPassword = document.getElementById("confirm-password");
         if (confirmPassword) confirmPassword.value = "";
-        window.setTimeout(function () { goToPortal(account); }, 650);
+        window.setTimeout(function () { goToPortal(account); }, 450);
       } catch (error) {
         status.textContent = error.message || "No se pudo crear la cuenta en este navegador.";
         submit.disabled = false;
@@ -254,8 +451,7 @@
 
     document.querySelectorAll("[data-social-demo]").forEach(function (button) {
       button.addEventListener("click", function () {
-        document.getElementById("auth-status").textContent =
-          "El acceso con " + button.dataset.socialDemo + " todavía no está conectado. Usa el registro con correo para probar la web.";
+        document.getElementById("auth-status").textContent = "El acceso con " + button.dataset.socialDemo + " aún no está conectado. Usa el registro con correo para probar la web.";
       });
     });
   }
@@ -268,6 +464,7 @@
       var country = data.get("country");
       var sector = data.get("sector");
       var duration = data.get("duration");
+      var offers = getAllOffers();
       var activeFilters = [];
       if (country !== "cualquiera") activeFilters.push("país");
       if (sector !== "cualquiera") activeFilters.push("sector");
@@ -279,12 +476,12 @@
           (duration === "cualquiera" || offer.durations.indexOf(duration) !== -1);
       }
 
-      var exactOffers = jobOffers.filter(matches);
+      var exactOffers = offers.filter(matches);
       var selectedOffers = exactOffers;
       var exactMatch = exactOffers.length > 0;
       var scores = [];
       if (!exactMatch) {
-        scores = jobOffers.map(function (offer) {
+        scores = offers.map(function (offer) {
           var score = 0;
           if (country !== "cualquiera" && offer.country === country) score += 1;
           if (sector !== "cualquiera" && offer.sector === sector) score += 1;
@@ -303,19 +500,17 @@
       var motivations = data.getAll("motivation");
       var motivationText = motivations.length ? motivations.join(", ") : "sin motivación indicada";
       document.getElementById("matching-title").textContent = exactMatch
-        ? "Empresas que encajan con tus preferencias"
+        ? "Empresas y ofertas que encajan con tus preferencias"
         : (selectedOffers.length ? "Las ofertas más cercanas a tus preferencias" : "Aún no hay una oferta que encaje en esta selección");
-      document.getElementById("survey-summary").textContent =
-        "Buscas " + sectorLabel + " en " + countryLabel + " durante " + durationLabel +
+      document.getElementById("survey-summary").textContent = "Buscas " + sectorLabel + " en " + countryLabel + " durante " + durationLabel +
         ". Perfil de edad: " + age + ". Te motiva: " + motivationText + "." +
         (exactMatch ? " Estas vacantes coinciden en país, sector y duración." :
-          (selectedOffers.length ? " No hay coincidencia exacta en la selección actual; estas ofertas comparten parte de tus criterios." :
-            " Prueba a cambiar el país, el sector o la duración, o consulta todas las ofertas de EURES."));
+          (selectedOffers.length ? " No hay coincidencia exacta en esta selección; estas ofertas comparten parte de tus criterios." : " Prueba otros filtros o consulta más vacantes en EURES."));
 
       var list = document.getElementById("recommendation-list");
       if (selectedOffers.length) {
         list.innerHTML = selectedOffers.map(function (offer) {
-          var badge = "Coincidencia exacta";
+          var badge = "Coincide con tus filtros";
           if (!exactMatch) {
             var item = scores.find(function (scoreItem) { return scoreItem.offer === offer; });
             badge = "Coincide en " + item.score + " de " + activeFilters.length + " preferencias";
@@ -329,16 +524,12 @@
       var needsHousing = data.get("accommodation") === "si";
       var needsTransport = data.get("transport") === "si";
       var total = 89 + (needsHousing ? 60 : 0) + (needsTransport ? 30 : 0);
-      var base = needsHousing ? 149 : 89;
-      var priceText = "Tu paquete de búsqueda de empleo: 89 €";
-      if (needsHousing) priceText += " + búsqueda y gestión inicial de vivienda: 60 € = 149 €";
-      if (needsTransport) priceText += " + gestión del transporte: 30 €";
-      priceText += ". Total orientativo de Rumbo: " + total + " €.";
-      priceText += " " + (needsHousing
-        ? "Rumbo buscaría y te facilitaría opciones de piso; el alquiler, la fianza y los suministros se pagan aparte."
-        : "No se añade la búsqueda de vivienda.");
-      if (needsTransport) priceText += " Los billetes y gastos del viaje no están incluidos.";
-      else priceText += " No se ha añadido la gestión del transporte.";
+      var priceText = "Búsqueda de empleo: 89 €";
+      if (needsHousing) priceText += " + gestión de búsqueda de vivienda: 60 €";
+      if (needsTransport) priceText += " + gestión de transporte: 30 €";
+      priceText += ". Total orientativo de los servicios de Rumbo: " + total + " €.";
+      priceText += needsHousing ? " El alquiler, la fianza y los suministros se pagan aparte." : " No se añade la búsqueda de vivienda.";
+      priceText += needsTransport ? " Los billetes y gastos del viaje no están incluidos." : " No se añade la gestión del transporte.";
       document.getElementById("recommended-price").textContent = priceText;
       document.getElementById("survey-result").classList.add("visible");
       document.getElementById("survey-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -350,18 +541,66 @@
     offerForm.addEventListener("submit", function (event) {
       event.preventDefault();
       var data = new FormData(offerForm);
-      var description = data.get("description").trim();
-      var preview = "Puesto: " + data.get("title") + "\nEmpresa: " + data.get("company") +
-        "\nPaís: " + data.get("country") + "\nSector: " + data.get("sector") +
-        "\nDuración: " + data.get("duration") + "\nAlojamiento: " + data.get("housing") +
-        "\nIdiomas: " + (data.get("language") || "No indicado") +
-        "\nSalario indicado: " + (data.get("salary") || "No indicado") +
-        "\nPromoción: " + data.get("sponsor") +
-        "\n\nDescripción:\n" + description;
-      document.getElementById("offer-preview-text").textContent = preview;
-      document.getElementById("offer-preview").classList.add("visible");
-      document.getElementById("offer-preview").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      var company = String(data.get("company") || "").trim();
+      var contact = String(data.get("email") || "").trim();
+      var title = String(data.get("title") || "").trim();
+      var country = String(data.get("country") || "").trim();
+      var location = String(data.get("location") || "").trim();
+      var sector = sectorDetails(data.get("sector"));
+      var duration = durationDetails(data.get("duration"), offerForm.querySelector('[name="duration"]').selectedOptions[0].textContent);
+      var packageLabel = data.get("package") === "selection" ? "Apoyo de selección · 149 €" : "Publicación estándar · 49 €";
+      var packagePrice = data.get("package") === "selection" ? 149 : 49;
+      var sponsored = data.get("sponsor") === "si";
+      var estimatedPrice = packagePrice + (sponsored ? 29 : 0);
+      var housing = String(data.get("housing") || "No indicado");
+      var salary = String(data.get("salary") || "Salario no indicado").trim();
+      var language = String(data.get("language") || "").trim();
+      var description = String(data.get("description") || "").trim();
+      var offer = {
+        id: createId(),
+        isDemo: true,
+        sponsored: sponsored,
+        packageLabel: packageLabel,
+        company: company,
+        title: title,
+        country: country,
+        location: location || "Ubicación no indicada",
+        sector: sector.key,
+        sectorLabel: sector.label,
+        durations: duration.values,
+        durationLabel: duration.label,
+        salary: salary,
+        housing: housing,
+        deadline: "Anuncio de demostración enviado desde este navegador; no verificado por Rumbo.",
+        details: description + (language ? " Idiomas: " + language + "." : ""),
+        contactEmail: contact,
+        url: "mailto:" + encodeURIComponent(contact).replace(/%40/gi, "@"),
+        source: "Contacto directo",
+        createdAt: Date.now()
+      };
+
+      var status = document.getElementById("offer-save-status");
+      var previewText = document.getElementById("offer-preview-text");
+      try {
+        var offers = getDemoOffers();
+        offers.unshift(offer);
+        localStorage.setItem(DEMO_OFFERS_KEY, JSON.stringify(offers));
+        if (previewText) previewText.textContent = "Oferta guardada en esta demostración.\nPuesto: " + title + "\nEmpresa: " + company +
+          "\nPaís: " + country + "\nSector: " + sector.label + "\nContrato: " + duration.label +
+          "\nAlojamiento: " + housing + "\nSalario: " + salary + "\nServicio: " + packageLabel +
+          "\nPromoción: " + (offer.sponsored ? "Sí, se verá como patrocinada" : "No") +
+          "\nTotal orientativo: " + estimatedPrice + " € (sin cobro)" +
+          "\n\n" + description;
+        if (status) status.innerHTML = 'Ya aparece en las ofertas y en el mapa de este navegador. <a href="recomendadas.html#mapa">Ver la oferta →</a>' +
+          (offer.sponsored ? ' <span class="pill gold">Patrocinada en esta demo</span>' : '');
+        document.getElementById("offer-preview").classList.add("visible");
+        offerForm.reset();
+        renderCollections("cualquiera");
+        document.getElementById("offer-preview").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } catch (error) {
+        if (status) status.textContent = "No se pudo guardar. Comprueba que el navegador permita guardar datos de esta página.";
+        document.getElementById("offer-preview").classList.add("visible");
+      }
     });
   }
 }());
-
