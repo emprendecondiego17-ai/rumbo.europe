@@ -202,6 +202,7 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
 .auth-card { background: white; padding: 29px; border: 1px solid #dce6f2; border-radius: 25px; box-shadow: var(--shadow); }
 .auth-card h2 { margin: 0 0 5px; font-size: 1.65rem; }
 .auth-card > p { color: var(--muted); font-size: .88rem; margin-bottom: 21px; }
+.auth-card > .auth-context:not([hidden]) { margin: -10px 0 15px; padding: 10px 12px; border: 1px solid #d7e5f6; border-radius: 12px; background: #eff6ff; color: #385578; font-size: .8rem; line-height: 1.5; }
 .role-select { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 17px 0 20px; }
 .role-option { position: relative; }
 .role-option input { position: absolute; opacity: 0; }

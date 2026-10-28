@@ -4,6 +4,49 @@
   var ACCOUNT_KEY = "rumboDemoAccounts";
   var DEMO_OFFERS_KEY = "rumboDemoOffers";
   var HASH_ITERATIONS = 120000;
+  var protectedPageRoles = {
+    "candidatos.html": "candidato",
+    "encuesta.html": "candidato",
+    "paquetes.html": "candidato",
+    "recomendadas.html": "candidato",
+    "empresas.html": "empresa",
+    "paquetes-empresas.html": "empresa",
+    "publicar-oferta.html": "empresa"
+  };
+
+  function currentProfile() {
+    try { return JSON.parse(sessionStorage.getItem("rumboDemoProfile") || "null"); } catch (error) { return null; }
+  }
+
+  function accessUrl(destination, role) {
+    var query = new URLSearchParams();
+    query.set("next", destination);
+    query.set("role", role);
+    return "acceso.html?" + query.toString();
+  }
+
+  function protectPageAndLinks() {
+    var currentPage = window.location.pathname.split("/").pop().toLowerCase();
+    var requiredRole = protectedPageRoles[currentPage];
+    var profile = currentProfile();
+    if (requiredRole && (!profile || profile.role !== requiredRole)) {
+      window.location.replace(accessUrl(currentPage, requiredRole));
+    }
+
+    document.querySelectorAll("a[href]").forEach(function (link) {
+      var rawHref = link.getAttribute("href") || "";
+      if (/^(https?:|mailto:|tel:|#|javascript:)/i.test(rawHref)) return;
+      var destination = rawHref.split(/[?#]/)[0].split("/").pop().toLowerCase();
+      var role = protectedPageRoles[destination];
+      if (!role) return;
+      link.addEventListener("click", function (event) {
+        var activeProfile = currentProfile();
+        if (activeProfile && activeProfile.role === role) return;
+        event.preventDefault();
+        window.location.href = accessUrl(destination, role);
+      });
+    });
+  }
 
   // Estas vacantes se seleccionaron de fuentes externas. La disponibilidad puede cambiar.
   var curatedOffers = [
@@ -314,6 +357,8 @@
     updateMapCountry("cualquiera");
   }
 
+  protectPageAndLinks();
+
   var menuButtons = document.querySelectorAll(".menu-toggle");
   menuButtons.forEach(function (button) {
     button.addEventListener("click", function () {
@@ -375,7 +420,10 @@
 
   function goToPortal(account) {
     try { sessionStorage.setItem("rumboDemoProfile", JSON.stringify({ name: account.name, email: account.email, role: account.role })); } catch (error) { /* La demo no depende de la sesión. */ }
-    window.location.href = account.role === "empresa" ? "empresas.html" : "candidatos.html";
+    var requestedPage = new URLSearchParams(window.location.search).get("next") || "";
+    var safePage = requestedPage.split(/[?#]/)[0];
+    var isSafePage = /^[a-z0-9-]+\.html$/i.test(safePage) && protectedPageRoles[safePage] === account.role;
+    window.location.href = isSafePage ? safePage : (account.role === "empresa" ? "empresas.html" : "index.html");
   }
 
   document.querySelectorAll("[data-auth-mode]").forEach(function (button) {
@@ -406,6 +454,30 @@
 
   var authForm = document.getElementById("auth-form");
   if (authForm) {
+    var accessParams = new URLSearchParams(window.location.search);
+    var requiredRole = accessParams.get("role");
+    if (requiredRole !== "candidato" && requiredRole !== "empresa") requiredRole = "";
+    if (requiredRole) {
+      var requestedRoleInput = authForm.querySelector('input[name="role"][value="' + requiredRole + '"]');
+      if (requestedRoleInput) requestedRoleInput.checked = true;
+    }
+    var requestedNext = accessParams.get("next");
+    var destinationNames = {
+      "encuesta.html": "la encuesta",
+      "paquetes.html": "los paquetes para personas candidatas",
+      "recomendadas.html": "las empresas recomendadas",
+      "candidatos.html": "el área de empleo",
+      "empresas.html": "el portal de empresas",
+      "paquetes-empresas.html": "los paquetes para empresas",
+      "publicar-oferta.html": "la publicación de ofertas"
+    };
+    var nextName = requestedNext ? requestedNext.split(/[?#]/)[0].split("/").pop() : "";
+    var accessContext = document.getElementById("auth-context");
+    if (accessContext && destinationNames[nextName]) {
+      accessContext.hidden = false;
+      accessContext.textContent = "Inicia sesión o crea una cuenta para acceder a " + destinationNames[nextName] + ".";
+    }
+
     authForm.addEventListener("submit", async function (event) {
       event.preventDefault();
       var status = document.getElementById("auth-status");
@@ -422,6 +494,7 @@
         if (signup) {
           var name = document.getElementById("name").value.trim();
           var confirmation = document.getElementById("confirm-password").value;
+          if (requiredRole && role !== requiredRole) throw new Error("Para abrir esta sección, selecciona el perfil indicado.");
           if (password !== confirmation) throw new Error("Las contraseñas no coinciden. Comprueba las dos casillas.");
           if (accounts.some(function (item) { return item.email === email; })) throw new Error("Ya existe una cuenta de prueba con ese correo en este navegador. Inicia sesión.");
           var salt = createSalt();
@@ -432,6 +505,7 @@
         } else {
           account = accounts.find(function (item) { return item.email === email; });
           if (!account) throw new Error("No encuentro esa cuenta en este navegador. Pulsa «Crear cuenta» primero.");
+          if (requiredRole && account.role !== requiredRole) throw new Error("Esta sección requiere una cuenta de " + (requiredRole === "empresa" ? "empresa" : "persona candidata") + ". Usa el perfil correcto.");
           var enteredHash = await passwordHash(password, account.salt);
           if (enteredHash !== account.passwordHash) throw new Error("La contraseña no coincide. Vuelve a intentarlo.");
           status.textContent = "Sesión iniciada. Entrando en Rumbo…";
