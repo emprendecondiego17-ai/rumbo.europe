@@ -1,86 +1,86 @@
-const formularioBusqueda = document.querySelector("#form-busqueda");
+(function () {
+  "use strict";
 
-if (formularioBusqueda) {
-  const resultadoBusqueda = document.querySelector("#resultado");
-  const textoResultado = document.querySelector("#resultado-text");
-  const errorMotivacion = document.querySelector("#motivation-error");
-
-  formularioBusqueda.addEventListener("submit", function (evento) {
-    evento.preventDefault();
-
-    const motivaciones = Array.from(
-      formularioBusqueda.querySelectorAll('input[name="motivation"]:checked')
-    ).map(function (opcion) {
-      return opcion.value;
+  document.querySelectorAll(".menu-toggle").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var nav = document.getElementById(button.getAttribute("aria-controls"));
+      if (!nav) return;
+      var isOpen = nav.classList.toggle("open");
+      button.setAttribute("aria-expanded", String(isOpen));
+      button.setAttribute("aria-label", isOpen ? "Cerrar menú" : "Abrir menú");
     });
-
-    if (motivaciones.length === 0) {
-      errorMotivacion.textContent = "Selecciona al menos una motivación para continuar.";
-      errorMotivacion.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-
-    errorMotivacion.textContent = "";
-
-    const edad = formularioBusqueda.querySelector('input[name="age"]:checked').value;
-    const paisElegido = document.querySelector("#country").value;
-    const otroPais = document.querySelector("#other-country").value.trim();
-    const sectorElegido = document.querySelector("#sector").value;
-    const otroSector = document.querySelector("#other-sector").value.trim();
-    const duracion = formularioBusqueda.querySelector('input[name="duration"]:checked').value;
-    const alojamiento = formularioBusqueda.querySelector('input[name="housing"]:checked').value;
-
-    const pais = otroPais ? paisElegido + " (" + otroPais + ")" : paisElegido;
-    const sector = otroSector ? sectorElegido + " (" + otroSector + ")" : sectorElegido;
-
-    const resumen = [
-      "Rango de edad: " + edad,
-      "País preferido: " + pais,
-      "Sector: " + sector,
-      "Duración del contrato: " + duracion,
-      "Alojamiento: " + alojamiento,
-      "Motivaciones: " + motivaciones.join(", ")
-    ];
-
-    textoResultado.textContent = resumen.join("\n");
-    resultadoBusqueda.hidden = false;
-    resultadoBusqueda.scrollIntoView({ behavior: "smooth", block: "center" });
   });
-}
 
-document.querySelectorAll(".transport-checkbox").forEach(function (casilla) {
-  casilla.addEventListener("change", function () {
-    const precioBase = Number(casilla.dataset.basePrice);
-    const total = document.querySelector("#" + casilla.dataset.totalId);
-    const extraTransporte = casilla.checked ? 30 : 0;
-    total.textContent = (precioBase + extraTransporte) + " €";
+  document.querySelectorAll("[data-auth-mode]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var signup = button.dataset.authMode === "signup";
+      var nameField = document.getElementById("name-field");
+      var submit = document.getElementById("auth-submit");
+      var heading = document.getElementById("auth-heading");
+      var switchText = document.getElementById("auth-switch-text");
+      if (!nameField || !submit || !heading || !switchText) return;
+      nameField.hidden = !signup;
+      nameField.querySelector("input").required = signup;
+      submit.textContent = signup ? "Crear cuenta de demostración" : "Entrar en la demo";
+      heading.textContent = signup ? "Crea tu cuenta Rumbo" : "Accede a Rumbo";
+      switchText.textContent = signup ? "¿Ya tienes cuenta?" : "¿Todavía no tienes cuenta?";
+      document.querySelectorAll("[data-auth-mode]").forEach(function (item) {
+        item.hidden = item === button;
+      });
+    });
   });
-});
 
-const formularioOferta = document.querySelector("#offer-form");
+  var authForm = document.getElementById("auth-form");
+  if (authForm) {
+    authForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var role = authForm.querySelector('input[name="role"]:checked').value;
+      var status = document.getElementById("auth-status");
+      status.textContent = "Abriendo la versión de demostración…";
+      window.setTimeout(function () {
+        window.location.href = role === "empresa" ? "empresas.html" : "candidatos.html";
+      }, 350);
+    });
+    document.querySelectorAll("[data-social-demo]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        document.getElementById("auth-status").textContent = "El acceso con " + button.dataset.socialDemo + " está dibujado como ejemplo; requiere configurar una autenticación real.";
+      });
+    });
+  }
 
-if (formularioOferta) {
-  const vistaPrevia = document.querySelector("#offer-preview");
+  var survey = document.getElementById("survey-form");
+  if (survey) {
+    survey.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var data = new FormData(survey);
+      var motivations = data.getAll("motivation");
+      var reasons = motivations.length ? motivations.join(", ") : "sin motivación seleccionada";
+      var accommodation = data.get("accommodation");
+      var text = "Tienes " + data.get("age") + " años, buscas en " + data.get("country") +
+        " y te interesa " + data.get("sector") + ". Prefieres un contrato " + data.get("duration") +
+        "; alojamiento: " + accommodation + ". Te motiva: " + reasons + ".";
+      document.getElementById("survey-summary").textContent = text;
+      document.getElementById("survey-result").classList.add("visible");
+      document.getElementById("survey-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
 
-  formularioOferta.addEventListener("submit", function (evento) {
-    evento.preventDefault();
-
-    const empresa = document.querySelector("#company-name").value.trim();
-    const puesto = document.querySelector("#job-title").value.trim();
-    const pais = document.querySelector("#job-country").value.trim();
-    const sector = document.querySelector("#job-sector").value.trim();
-    const duracion = document.querySelector("#job-duration").value;
-    const alojamiento = document.querySelector("#job-housing").value;
-    const salario = document.querySelector("#job-salary").value.trim();
-    const descripcion = document.querySelector("#job-description").value.trim();
-
-    document.querySelector("#preview-title").textContent = puesto;
-    document.querySelector("#preview-meta").textContent = empresa + " · " + pais + " · " + sector + " · " + duracion;
-    document.querySelector("#preview-housing").textContent = "Alojamiento: " + alojamiento;
-    document.querySelector("#preview-salary").textContent = salario ? "Salario indicado: " + salario : "Salario: pendiente de indicar";
-    document.querySelector("#preview-description").textContent = descripcion;
-
-    vistaPrevia.hidden = false;
-    vistaPrevia.scrollIntoView({ behavior: "smooth", block: "center" });
-  });
-}
+  var offer = document.getElementById("offer-form");
+  if (offer) {
+    offer.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var data = new FormData(offer);
+      var description = data.get("description").trim();
+      var preview = "Puesto: " + data.get("title") + "\nEmpresa: " + data.get("company") +
+        "\nPaís: " + data.get("country") + "\nSector: " + data.get("sector") +
+        "\nDuración: " + data.get("duration") + "\nAlojamiento: " + data.get("housing") +
+        "\nIdiomas: " + (data.get("language") || "No indicado") +
+        "\nSalario indicado: " + (data.get("salary") || "No indicado") +
+        "\nPromoción: " + data.get("sponsor") +
+        "\n\nDescripción:\n" + description;
+      document.getElementById("offer-preview-text").textContent = preview;
+      document.getElementById("offer-preview").classList.add("visible");
+      document.getElementById("offer-preview").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
+}());

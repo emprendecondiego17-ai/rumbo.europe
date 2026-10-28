@@ -3,250 +3,52 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Rumbo te ayuda a preparar una búsqueda de empleo en Europa según tus preferencias.">
-  <title>Rumbo | Empleo en Europa</title>
+  <meta name="theme-color" content="#08275c">
+  <meta name="description" content="Rumbo te ayuda a preparar una experiencia laboral en Europa.">
+  <title>Rumbo — Acceso</title>
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
 </head>
-<body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="logo" href="#inicio">Rumbo<span>.</span></a>
-      <nav aria-label="Navegación principal">
-        <a href="#idea">La idea</a>
-        <a href="#busqueda">Encuesta</a>
-        <a href="#paquetes">Paquetes</a>
-        <a href="empresas.html">Empresas</a>
-      </nav>
-    </div>
+<body class="login-page">
+  <header class="wrap login-header">
+    <a class="brand" href="index.html" aria-label="Rumbo, inicio"><span class="brand-mark">✦</span><span>rumbo</span></a>
+    <span class="pill">PROTOTIPO ACADÉMICO</span>
   </header>
-
-  <main>
-    <section class="hero" id="inicio">
-      <div class="hero-content">
-        <p class="eyebrow">Empleo y nuevas experiencias</p>
-        <h1>Encuentra un trabajo en Europa que encaje contigo</h1>
-        <p class="hero-description">Elige el país, el sector y el tipo de ayuda que necesitas para organizar tu experiencia laboral en el extranjero.</p>
-        <a class="button" href="#busqueda">Prepara tu búsqueda <span aria-hidden="true">→</span></a>
-        <p class="hero-note">Para personas de cualquier edad y sector.</p>
-      </div>
-      <div class="hero-visual" aria-label="Ejemplo ilustrativo de búsqueda">
-        <div class="hero-orbit" aria-hidden="true"></div>
-        <article class="hero-card">
-          <div class="hero-globe" aria-hidden="true">🌍</div>
-          <p class="card-label">BÚSQUEDA A TU MEDIDA</p>
-          <h2>Tu próxima experiencia empieza con tus prioridades</h2>
-          <p>País, empleo, alojamiento y acompañamiento en un mismo plan.</p>
-          <div class="tags"><span>Empleo</span><span>Alojamiento</span><span>Apoyo</span></div>
-        </article>
-      </div>
+  <main class="wrap login-layout">
+    <section class="login-story">
+      <span class="eyebrow">Tu próximo paso, más cerca</span>
+      <h1>Tu talento puede encontrar <span>un nuevo rumbo.</span></h1>
+      <p>Una idea para conectar personas con oportunidades laborales en Europa y acompañarles en la preparación del viaje, el papeleo y el alojamiento.</p>
+      <div class="login-benefit"><b>✓</b><span>Una propuesta para distintos sectores y perfiles.</span></div>
+      <div class="login-benefit"><b>✓</b><span>Servicios y precios explicados con claridad.</span></div>
+      <div class="login-benefit"><b>✓</b><span>Ofertas externas enlazadas a su fuente original.</span></div>
     </section>
-
-    <section class="section" id="idea">
-      <div class="container">
-        <div class="section-heading">
-          <p class="eyebrow">Una experiencia más completa</p>
-          <h2>Tu trabajo y tu viaje, mejor organizados</h2>
-          <p>La propuesta reúne la búsqueda de empleo y la ayuda que puedes necesitar para trabajar en otro país.</p>
+    <section class="auth-card" aria-labelledby="auth-heading">
+      <h2 id="auth-heading">Accede a Rumbo</h2>
+      <p>Elige cómo quieres usar la demostración.</p>
+      <form id="auth-form">
+        <div class="role-select" role="radiogroup" aria-label="Tipo de cuenta">
+          <label class="role-option"><input type="radio" name="role" value="candidato" checked><span><strong>Busco empleo</strong>Quiero encontrar trabajo</span></label>
+          <label class="role-option"><input type="radio" name="role" value="empresa"><span><strong>Soy empresa</strong>Quiero publicar una oferta</span></label>
         </div>
-        <div class="feature-grid">
-          <article class="feature-card">
-            <span class="feature-icon" aria-hidden="true">✦</span>
-            <h3>Elige tu sector</h3>
-            <p>Explora distintos tipos de trabajo y ajusta la búsqueda a tus intereses.</p>
-          </article>
-          <article class="feature-card">
-            <span class="feature-icon" aria-hidden="true">⌂</span>
-            <h3>Organiza los servicios</h3>
-            <p>Indica si necesitas alojamiento, orientación con trámites o ayuda para el traslado.</p>
-          </article>
-          <article class="feature-card">
-            <span class="feature-icon" aria-hidden="true">✓</span>
-            <h3>Recibe acompañamiento</h3>
-            <p>Sigue las etapas del proceso desde la selección hasta tu experiencia en el nuevo país.</p>
-          </article>
+        <div class="auth-fields">
+          <div id="name-field" hidden><label class="sr-only" for="name">Nombre</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Tu nombre"></div>
+          <div><label class="sr-only" for="email">Correo electrónico</label><input id="email" name="email" type="email" autocomplete="email" placeholder="Correo electrónico" required></div>
+          <div><label class="sr-only" for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Contraseña" minlength="6" required></div>
         </div>
+        <button class="button" id="auth-submit" type="submit">Entrar en la demo <span aria-hidden="true">→</span></button>
+        <p class="auth-switch"><span id="auth-switch-text">¿Todavía no tienes cuenta?</span> <button class="auth-toggle" type="button" data-auth-mode="signup">Crear cuenta</button><button class="auth-toggle" type="button" data-auth-mode="login" hidden>Iniciar sesión</button></p>
+        <p class="status-message" id="auth-status" role="status" aria-live="polite"></p>
+      </form>
+      <div class="divider">o continúa con</div>
+      <div class="social-row">
+        <button class="social-btn" type="button" data-social-demo="Google">G&nbsp; Google</button>
+        <button class="social-btn" type="button" data-social-demo="Apple">●&nbsp; Apple</button>
       </div>
-    </section>
-
-    <section class="survey-section" id="busqueda">
-      <div class="container survey-container">
-        <div class="section-heading">
-          <p class="eyebrow">Cuéntanos qué buscas</p>
-          <h2>Prepara tu búsqueda de empleo</h2>
-          <p>Responde estas seis preguntas para ver un resumen de tus preferencias.</p>
-        </div>
-
-        <form class="survey-card" id="form-busqueda">
-          <fieldset class="question">
-            <legend>1. ¿En qué rango de edad estás?</legend>
-            <p class="question-help">Incluimos los grupos de edad del modelo de negocio y una opción para mayores de 50.</p>
-            <div class="choice-grid">
-              <label class="choice"><input type="radio" name="age" value="18–25 años" required><span>18–25 años</span></label>
-              <label class="choice"><input type="radio" name="age" value="25–30 años"><span>25–30 años</span></label>
-              <label class="choice"><input type="radio" name="age" value="30–40 años"><span>30–40 años</span></label>
-              <label class="choice"><input type="radio" name="age" value="40–50 años"><span>40–50 años</span></label>
-              <label class="choice"><input type="radio" name="age" value="Más de 50 años"><span>Más de 50 años</span></label>
-            </div>
-          </fieldset>
-
-          <div class="question">
-            <label class="field-label" for="country">2. ¿Qué país prefieres?</label>
-            <select class="field-control" id="country" name="country" required>
-              <option value="">Selecciona una opción</option>
-              <option value="No tengo preferencia; estoy abierto/a a Europa">No tengo preferencia; estoy abierto/a a Europa</option>
-              <option value="Alemania">Alemania</option>
-              <option value="Austria">Austria</option>
-              <option value="Bélgica">Bélgica</option>
-              <option value="España">España</option>
-              <option value="Francia">Francia</option>
-              <option value="Irlanda">Irlanda</option>
-              <option value="Italia">Italia</option>
-              <option value="Países Bajos">Países Bajos</option>
-              <option value="Portugal">Portugal</option>
-              <option value="Suecia">Suecia</option>
-              <option value="Otro país europeo">Otro país europeo</option>
-            </select>
-            <label class="field-label secondary-label" for="other-country">Si elegiste otro país, ¿cuál? <span>(opcional)</span></label>
-            <input class="field-control" type="text" id="other-country" name="other-country" placeholder="Escribe el país">
-          </div>
-
-          <div class="question">
-            <label class="field-label" for="sector">3. ¿En qué sector deseas trabajar?</label>
-            <select class="field-control" id="sector" name="sector" required>
-              <option value="">Selecciona un sector</option>
-              <option value="Cualquier sector">Cualquier sector; quiero ver distintas opciones</option>
-              <option value="Agricultura y medioambiente">Agricultura y medioambiente</option>
-              <option value="Comercio y ventas">Comercio y ventas</option>
-              <option value="Construcción y oficios">Construcción y oficios</option>
-              <option value="Educación">Educación</option>
-              <option value="Energía">Energía</option>
-              <option value="Hostelería, turismo y ocio">Hostelería, turismo y ocio</option>
-              <option value="Industria y fabricación">Industria y fabricación</option>
-              <option value="Logística y transporte">Logística y transporte</option>
-              <option value="Sanidad y cuidados">Sanidad y cuidados</option>
-              <option value="Tecnología e informática">Tecnología e informática</option>
-              <option value="Administración y atención al cliente">Administración y atención al cliente</option>
-              <option value="Otro sector">Otro sector</option>
-            </select>
-            <label class="field-label secondary-label" for="other-sector">Si elegiste otro sector, ¿cuál? <span>(opcional)</span></label>
-            <input class="field-control" type="text" id="other-sector" name="other-sector" placeholder="Escribe el sector">
-          </div>
-
-          <fieldset class="question">
-            <legend>4. ¿Qué duración de contrato prefieres?</legend>
-            <div class="choice-grid">
-              <label class="choice"><input type="radio" name="duration" value="Corta duración (3–6 meses)" required><span>Corta duración (3–6 meses)</span></label>
-              <label class="choice"><input type="radio" name="duration" value="Larga duración (más de 6 meses)"><span>Larga duración (más de 6 meses)</span></label>
-              <label class="choice"><input type="radio" name="duration" value="No tengo preferencia"><span>No tengo preferencia</span></label>
-            </div>
-          </fieldset>
-
-          <fieldset class="question">
-            <legend>5. ¿Quieres ayuda para encontrar alojamiento?</legend>
-            <div class="choice-grid">
-              <label class="choice"><input type="radio" name="housing" value="Sí, necesito alojamiento" required><span>Sí, necesito alojamiento</span></label>
-              <label class="choice"><input type="radio" name="housing" value="Me interesa según disponibilidad y precio"><span>Me interesa según disponibilidad y precio</span></label>
-              <label class="choice"><input type="radio" name="housing" value="No, lo buscaré por mi cuenta"><span>No, lo buscaré por mi cuenta</span></label>
-            </div>
-          </fieldset>
-
-          <fieldset class="question">
-            <legend>6. ¿Qué te motiva a buscar trabajo en otro país?</legend>
-            <p class="question-help">Puedes elegir varias opciones.</p>
-            <div class="choice-grid">
-              <label class="choice"><input type="checkbox" name="motivation" value="Ganar dinero o ahorrar"><span>Ganar dinero o ahorrar</span></label>
-              <label class="choice"><input type="checkbox" name="motivation" value="Mejorar mi currículum"><span>Mejorar mi currículum</span></label>
-              <label class="choice"><input type="checkbox" name="motivation" value="Aprender o practicar un idioma"><span>Aprender o practicar un idioma</span></label>
-              <label class="choice"><input type="checkbox" name="motivation" value="Vivir una experiencia cultural"><span>Vivir una experiencia cultural</span></label>
-              <label class="choice"><input type="checkbox" name="motivation" value="Emigrar o cambiar de país"><span>Emigrar o cambiar de país</span></label>
-              <label class="choice"><input type="checkbox" name="motivation" value="Encontrar empleo ante el desempleo"><span>Encontrar empleo ante el desempleo</span></label>
-              <label class="choice"><input type="checkbox" name="motivation" value="Mejorar mis oportunidades o salario"><span>Mejorar mis oportunidades o salario</span></label>
-              <label class="choice"><input type="checkbox" name="motivation" value="Conocer otros lugares y personas"><span>Conocer otros lugares y personas</span></label>
-            </div>
-            <p class="field-error" id="motivation-error" aria-live="polite"></p>
-          </fieldset>
-
-          <button class="button submit-button" type="submit">Ver mi resumen <span aria-hidden="true">→</span></button>
-          <p class="privacy-note">Prototipo: tus respuestas se muestran aquí y no se envían ni se guardan.</p>
-        </form>
-
-        <section class="survey-result" id="resultado" hidden aria-live="polite">
-          <p class="eyebrow">Tu perfil de búsqueda</p>
-          <h3>Este es tu resumen</h3>
-          <p id="resultado-text"></p>
-          <p class="result-note">Este resumen es una demostración; todavía no busca ofertas reales.</p>
-        </section>
-      </div>
-    </section>
-
-    <section class="section pricing-section" id="paquetes">
-      <div class="container">
-        <div class="section-heading">
-          <p class="eyebrow">Servicios a tu medida</p>
-          <h2>Elige el apoyo que necesitas</h2>
-          <p>Dos paquetes sencillos y la posibilidad de añadir la gestión del transporte.</p>
-        </div>
-
-        <div class="pricing-grid">
-          <article class="price-card">
-            <p class="package-label">PAQUETE 1</p>
-            <h3>Búsqueda de empleo</h3>
-            <p class="price">89 € <span>precio de ejemplo</span></p>
-            <ul>
-              <li>Búsqueda de ofertas según país y sector.</li>
-              <li>Orientación sobre documentación laboral y de movilidad.</li>
-              <li>Acompañamiento durante el proceso de selección.</li>
-            </ul>
-            <label class="transport-option" for="transport-employment">
-              <input type="checkbox" class="transport-checkbox" id="transport-employment" data-base-price="89" data-total-id="employment-total">
-              <span>Añadir gestión del transporte <strong>+30 €</strong></span>
-            </label>
-            <p class="total-line">Total orientativo: <strong id="employment-total">89 €</strong></p>
-          </article>
-
-          <article class="price-card featured-price-card">
-            <p class="package-label">PAQUETE 2</p>
-            <h3>Empleo + alojamiento</h3>
-            <p class="price">149 € <span>precio de ejemplo</span></p>
-            <ul>
-              <li>Todo lo incluido en Búsqueda de empleo.</li>
-              <li>Búsqueda de alojamiento, según disponibilidad.</li>
-              <li>Orientación con la documentación del alojamiento.</li>
-            </ul>
-            <label class="transport-option" for="transport-housing">
-              <input type="checkbox" class="transport-checkbox" id="transport-housing" data-base-price="149" data-total-id="housing-total">
-              <span>Añadir gestión del transporte <strong>+30 €</strong></span>
-            </label>
-            <p class="total-line">Total orientativo: <strong id="housing-total">149 €</strong></p>
-          </article>
-        </div>
-
-        <p class="pricing-note">Precios ilustrativos para el proyecto universitario, pendientes de validar. El extra cubre la gestión del transporte; billetes y otros costes se pagarían aparte.</p>
-      </div>
-    </section>
-
-    <section class="section how-it-works">
-      <div class="container">
-        <div class="section-heading">
-          <p class="eyebrow">De la idea al primer día</p>
-          <h2>Un recorrido más sencillo de seguir</h2>
-        </div>
-        <div class="steps-grid">
-          <article class="step-card"><span>01</span><h3>Define lo que buscas</h3><p>Indica tus preferencias de país, sector, duración y servicios.</p></article>
-          <article class="step-card"><span>02</span><h3>Compara opciones</h3><p>La propuesta es mostrar ofertas y condiciones claras para ayudarte a decidir.</p></article>
-          <article class="step-card"><span>03</span><h3>Recibe acompañamiento</h3><p>Organiza los siguientes pasos antes, durante y después del traslado.</p></article>
-        </div>
-      </div>
+      <p class="auth-footnote">Esta es una maqueta: no escribas una contraseña real. No se guardan ni envían tus datos. Google y Apple aún no están conectados.</p>
     </section>
   </main>
-
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <a class="logo" href="#inicio">Rumbo<span>.</span></a>
-      <p>Prototipo académico. Precios y servicios orientativos; las ofertas no se publican realmente.</p>
-    </div>
-  </footer>
+  <footer class="wrap footer"><div class="footer-inner"><span>© 2026 Rumbo · Proyecto universitario</span><span>Acceso de demostración</span></div></footer>
 </body>
 </html>
 
