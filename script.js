@@ -89,58 +89,33 @@
     }
   ];
 
-  // Puntos representativos; el mapa es esquemático y no dibuja fronteras exactas.
+  // Nombres y códigos de países; sus fronteras reales están en europe-map-data.js.
   var europeanCountries = [
-    { name: "Albania", code: "AL", x: 414, y: 326 },
-    { name: "Alemania", code: "DE", x: 323, y: 230 },
-    { name: "Andorra", code: "AD", x: 225, y: 323 },
-    { name: "Armenia", code: "AM", x: 506, y: 285 },
-    { name: "Austria", code: "AT", x: 347, y: 265 },
-    { name: "Azerbaiyán", code: "AZ", x: 526, y: 255 },
-    { name: "Bélgica", code: "BE", x: 284, y: 236 },
-    { name: "Bielorrusia", code: "BY", x: 430, y: 204 },
-    { name: "Bosnia y Herzegovina", code: "BA", x: 389, y: 298 },
-    { name: "Bulgaria", code: "BG", x: 435, y: 294 },
-    { name: "Chipre", code: "CY", x: 483, y: 367 },
-    { name: "Ciudad del Vaticano", code: "VA", x: 344, y: 312 },
-    { name: "Croacia", code: "HR", x: 374, y: 285 },
-    { name: "Dinamarca", code: "DK", x: 322, y: 177 },
-    { name: "Eslovaquia", code: "SK", x: 373, y: 250 },
-    { name: "Eslovenia", code: "SI", x: 356, y: 278 },
-    { name: "España", code: "ES", x: 196, y: 317 },
-    { name: "Estonia", code: "EE", x: 435, y: 150 },
-    { name: "Finlandia", code: "FI", x: 410, y: 92 },
-    { name: "Francia", code: "FR", x: 253, y: 264 },
-    { name: "Georgia", code: "GE", x: 514, y: 273 },
-    { name: "Grecia", code: "GR", x: 446, y: 339 },
-    { name: "Hungría", code: "HU", x: 393, y: 264 },
-    { name: "Irlanda", code: "IE", x: 182, y: 202 },
-    { name: "Islandia", code: "IS", x: 111, y: 83 },
-    { name: "Italia", code: "IT", x: 350, y: 337 },
-    { name: "Kosovo", code: "XK", x: 412, y: 307 },
-    { name: "Letonia", code: "LV", x: 432, y: 170 },
-    { name: "Liechtenstein", code: "LI", x: 319, y: 267 },
-    { name: "Lituania", code: "LT", x: 425, y: 188 },
-    { name: "Luxemburgo", code: "LU", x: 298, y: 250 },
-    { name: "Macedonia del Norte", code: "MK", x: 423, y: 316 },
-    { name: "Malta", code: "MT", x: 380, y: 391 },
-    { name: "Moldavia", code: "MD", x: 457, y: 249 },
-    { name: "Mónaco", code: "MC", x: 284, y: 286 },
-    { name: "Montenegro", code: "ME", x: 402, y: 315 },
-    { name: "Noruega", code: "NO", x: 319, y: 94 },
-    { name: "Países Bajos", code: "NL", x: 294, y: 215 },
-    { name: "Polonia", code: "PL", x: 365, y: 222 },
-    { name: "Portugal", code: "PT", x: 164, y: 319 },
-    { name: "Reino Unido", code: "UK", x: 215, y: 201 },
-    { name: "República Checa", code: "CZ", x: 343, y: 241 },
-    { name: "Rumanía", code: "RO", x: 424, y: 266 },
-    { name: "Rusia", code: "RU", x: 531, y: 180 },
-    { name: "San Marino", code: "SM", x: 360, y: 309 },
-    { name: "Serbia", code: "RS", x: 407, y: 286 },
-    { name: "Suecia", code: "SE", x: 366, y: 100 },
-    { name: "Suiza", code: "CH", x: 306, y: 266 },
-    { name: "Turquía", code: "TR", x: 484, y: 320 },
-    { name: "Ucrania", code: "UA", x: 474, y: 222 }
+    { name: "Albania", code: "AL" }, { name: "Alemania", code: "DE" },
+    { name: "Andorra", code: "AD" }, { name: "Armenia", code: "AM" },
+    { name: "Austria", code: "AT" }, { name: "Azerbaiyán", code: "AZ" },
+    { name: "Bélgica", code: "BE" }, { name: "Bielorrusia", code: "BY" },
+    { name: "Bosnia y Herzegovina", code: "BA" }, { name: "Bulgaria", code: "BG" },
+    { name: "Chipre", code: "CY" }, { name: "Ciudad del Vaticano", code: "VA" },
+    { name: "Croacia", code: "HR" }, { name: "Dinamarca", code: "DK" },
+    { name: "Eslovaquia", code: "SK" }, { name: "Eslovenia", code: "SI" },
+    { name: "España", code: "ES" }, { name: "Estonia", code: "EE" },
+    { name: "Finlandia", code: "FI" }, { name: "Francia", code: "FR" },
+    { name: "Georgia", code: "GE" }, { name: "Grecia", code: "GR" },
+    { name: "Hungría", code: "HU" }, { name: "Irlanda", code: "IE" },
+    { name: "Islandia", code: "IS" }, { name: "Italia", code: "IT" },
+    { name: "Kosovo", code: "XK" }, { name: "Letonia", code: "LV" },
+    { name: "Liechtenstein", code: "LI" }, { name: "Lituania", code: "LT" },
+    { name: "Luxemburgo", code: "LU" }, { name: "Macedonia del Norte", code: "MK" },
+    { name: "Malta", code: "MT" }, { name: "Moldavia", code: "MD" },
+    { name: "Mónaco", code: "MC" }, { name: "Montenegro", code: "ME" },
+    { name: "Noruega", code: "NO" }, { name: "Países Bajos", code: "NL" },
+    { name: "Polonia", code: "PL" }, { name: "Portugal", code: "PT" },
+    { name: "Reino Unido", code: "GB" }, { name: "República Checa", code: "CZ" },
+    { name: "Rumanía", code: "RO" }, { name: "Rusia", code: "RU" },
+    { name: "San Marino", code: "SM" }, { name: "Serbia", code: "RS" },
+    { name: "Suecia", code: "SE" }, { name: "Suiza", code: "CH" },
+    { name: "Turquía", code: "TR" }, { name: "Ucrania", code: "UA" }
   ];
 
   function escapeHtml(value) {
@@ -258,15 +233,15 @@
     var select = document.getElementById("map-country-select");
     var result = document.getElementById("map-country-result");
     var list = document.getElementById("map-offers");
-    var pins = document.querySelectorAll(".map-pin");
+    var mapCountries = document.querySelectorAll(".map-country, .map-country-marker");
     var offers = getAllOffers();
     var selected = countryName === "cualquiera" ? offers : offers.filter(function (offer) { return offer.country === countryName; });
     if (select && select.value !== countryName) select.value = countryName;
 
-    pins.forEach(function (pin) {
-      var pinCountry = pin.getAttribute("data-country");
-      pin.classList.toggle("selected", pinCountry === countryName);
-      pin.classList.toggle("has-offers", offers.some(function (offer) { return offer.country === pinCountry; }));
+    mapCountries.forEach(function (mapCountry) {
+      var mapCountryName = mapCountry.getAttribute("data-country");
+      mapCountry.classList.toggle("selected", mapCountryName === countryName);
+      mapCountry.classList.toggle("has-offers", offers.some(function (offer) { return offer.country === mapCountryName; }));
     });
 
     if (result) {
@@ -286,33 +261,55 @@
   }
 
   function initializeMap() {
-    var pinsContainer = document.getElementById("map-country-pins");
+    var shapesContainer = document.getElementById("map-country-shapes");
+    var markersContainer = document.getElementById("map-country-markers");
     var select = document.getElementById("map-country-select");
-    if (!pinsContainer || !select) return;
+    if (!shapesContainer || !markersContainer || !select) return;
     fillCountrySelect(select, false);
-    europeanCountries.forEach(function (country) {
-      var pin = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      pin.setAttribute("class", "map-pin");
-      pin.setAttribute("transform", "translate(" + country.x + " " + country.y + ")");
-      pin.setAttribute("tabindex", "0");
-      pin.setAttribute("role", "button");
-      pin.setAttribute("aria-label", "Ver ofertas de " + country.name);
-      pin.setAttribute("data-country", country.name);
-      pin.innerHTML = '<title>Ver ofertas de ' + escapeHtml(country.name) + '</title><circle r="12"></circle><text y="3">' + escapeHtml(country.code) + '</text>';
-      pinsContainer.appendChild(pin);
+    var countryNames = new Set(europeanCountries.map(function (country) { return country.name; }));
+    var mapData = Array.isArray(window.RUMBO_EUROPE_MAP) ? window.RUMBO_EUROPE_MAP : [];
+    mapData.filter(function (country) { return countryNames.has(country.name); }).forEach(function (country) {
+      var shape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      shape.setAttribute("class", "map-country");
+      shape.setAttribute("d", country.d);
+      shape.setAttribute("tabindex", "0");
+      shape.setAttribute("role", "button");
+      shape.setAttribute("aria-label", "Ver ofertas de " + country.name);
+      shape.setAttribute("data-country", country.name);
+      shape.setAttribute("fill-rule", "evenodd");
+      var title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      title.textContent = country.name + " · seleccionar país";
+      shape.appendChild(title);
+      shapesContainer.appendChild(shape);
+
+      if (country.tiny) {
+        var marker = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        marker.setAttribute("class", "map-country-marker");
+        marker.setAttribute("transform", "translate(" + country.cx + " " + country.cy + ")");
+        marker.setAttribute("tabindex", "0");
+        marker.setAttribute("role", "button");
+        marker.setAttribute("aria-label", "Ver ofertas de " + country.name);
+        marker.setAttribute("data-country", country.name);
+        marker.innerHTML = '<title>' + escapeHtml(country.name) + '</title><circle r="8"></circle><text y="3">' + escapeHtml(country.code) + '</text>';
+        markersContainer.appendChild(marker);
+      }
     });
 
     select.addEventListener("change", function () { updateMapCountry(select.value); });
-    pinsContainer.addEventListener("click", function (event) {
-      var pin = event.target.closest(".map-pin");
-      if (pin) updateMapCountry(pin.getAttribute("data-country"));
-    });
-    pinsContainer.addEventListener("keydown", function (event) {
-      var pin = event.target.closest(".map-pin");
-      if (pin && (event.key === "Enter" || event.key === " ")) {
+    function activateMapCountry(event) {
+      var target = event.target.closest(".map-country, .map-country-marker");
+      if (target) updateMapCountry(target.getAttribute("data-country"));
+    }
+    function keyboardMapCountry(event) {
+      var target = event.target.closest(".map-country, .map-country-marker");
+      if (target && (event.key === "Enter" || event.key === " ")) {
         event.preventDefault();
-        updateMapCountry(pin.getAttribute("data-country"));
+        updateMapCountry(target.getAttribute("data-country"));
       }
+    }
+    [shapesContainer, markersContainer].forEach(function (container) {
+      container.addEventListener("click", activateMapCountry);
+      container.addEventListener("keydown", keyboardMapCountry);
     });
     updateMapCountry("cualquiera");
   }

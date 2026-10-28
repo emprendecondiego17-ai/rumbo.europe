@@ -148,18 +148,18 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
 .map-canvas { position: relative; min-width: 0; overflow: hidden; border-radius: 17px; background: #f3f8ff; }
 .europe-interactive-map { width: 100%; height: auto; }
 .map-water { fill: #e9f3ff; }
-.map-land { fill: #b8d0ed; stroke: #fff; stroke-width: 3; stroke-linejoin: round; }
-.map-north { fill: #c5dcf5; }
-.map-island { fill: #b8d0ed; }
-.map-peninsula { fill: #b8d0ed; }
-.map-label { fill: #6f8caf; font: 800 23px Manrope, sans-serif; letter-spacing: .13em; opacity: .52; pointer-events: none; }
-.map-pin { cursor: pointer; outline: none; }
-.map-pin circle { fill: #1553a3; stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 2px 3px #18396745); transition: r .15s, fill .15s, stroke-width .15s; }
-.map-pin text { fill: white; text-anchor: middle; font: 800 7px "DM Sans", sans-serif; pointer-events: none; }
-.map-pin.has-offers circle { fill: var(--gold); }
-.map-pin.has-offers text { fill: #18375f; }
-.map-pin.selected circle { stroke: #08275c; stroke-width: 4; }
-.map-pin:hover circle, .map-pin:focus-visible circle { r: 14; stroke: #08275c; stroke-width: 4; }
+.map-country { fill: #b8d0ed; stroke: #fff; stroke-width: 1.25; stroke-linejoin: round; vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .15s, stroke-width .15s; }
+.map-country.has-offers { fill: var(--gold); }
+.map-country:hover, .map-country:focus-visible { fill: #8fb5e6; stroke: #08275c; stroke-width: 2.2; outline: none; }
+.map-country.has-offers:hover, .map-country.has-offers:focus-visible { fill: #ffca20; }
+.map-country.selected { stroke: #08275c; stroke-width: 2.5; }
+.map-country-marker { cursor: pointer; outline: none; }
+.map-country-marker circle { fill: #1553a3; stroke: #fff; stroke-width: 1.7; vector-effect: non-scaling-stroke; filter: drop-shadow(0 2px 3px #18396745); transition: r .15s, fill .15s; }
+.map-country-marker text { fill: #fff; text-anchor: middle; font: 800 7px "DM Sans", sans-serif; pointer-events: none; }
+.map-country-marker.has-offers circle { fill: var(--gold); }
+.map-country-marker.has-offers text { fill: #18375f; }
+.map-country-marker.selected circle, .map-country-marker:hover circle, .map-country-marker:focus-visible circle { r: 10; stroke: #08275c; stroke-width: 2.2; }
+.map-water-label { fill: #829cbb; font: 750 10px "DM Sans", sans-serif; letter-spacing: .1em; opacity: .75; pointer-events: none; }
 .map-sidebar { display: flex; flex-direction: column; align-items: flex-start; gap: 13px; padding: 18px 12px 18px 4px; }
 .map-sidebar label { color: var(--navy); font-weight: 800; font-size: .91rem; }
 .map-sidebar select { width: 100%; min-height: 46px; border: 1px solid #d7e1ec; border-radius: 12px; background: white; padding: 9px 12px; color: var(--ink); }
