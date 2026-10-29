@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#08275c">
   <meta name="description" content="Rumbo te ayuda a preparar una experiencia laboral en Europa.">
   <title>Rumbo — Accede a Rumbo</title>
-  <link rel="stylesheet" href="styles.css?v=10">
-  <script src="script.js?v=10" defer></script>
+  <link rel="stylesheet" href="styles.css?v=11">
+  <script src="script.js?v=11" defer></script>
 </head>
 <body class="login-page">
   <header class="wrap login-header">
@@ -48,6 +48,19 @@
         <div class="auth-fields">
           <div id="name-field"><label class="sr-only" for="name">Nombre</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Tu nombre" required></div>
           <div><label class="sr-only" for="email">Correo electrónico</label><input id="email" name="email" type="email" autocomplete="email" placeholder="Correo electrónico" required></div>
+          <fieldset class="company-auth-fields" id="company-fields" hidden>
+            <legend>Datos de la empresa</legend>
+            <div class="company-auth-grid">
+              <div><label for="company-name">Nombre legal o comercial</label><input id="company-name" name="company-name" type="text" maxlength="120" placeholder="Ej.: Rumbo Europa, S. L." data-company-required></div>
+              <div><label for="company-tax-id">CIF / NIF / NIF-IVA</label><input id="company-tax-id" name="company-tax-id" type="text" minlength="7" maxlength="24" placeholder="Ej.: B12345678" data-company-required></div>
+              <div><label for="company-country">País de registro</label><select id="company-country" name="company-country" data-company-required><option value="">Selecciona un país</option><option>España</option><option>Alemania</option><option>Austria</option><option>Bélgica</option><option>Dinamarca</option><option>Francia</option><option>Irlanda</option><option>Italia</option><option>Malta</option><option>Noruega</option><option>Países Bajos</option><option>Portugal</option><option>Suecia</option><option>Otro país europeo</option></select></div>
+              <div><label for="company-legal-form">Forma jurídica (opcional)</label><input id="company-legal-form" name="company-legal-form" type="text" maxlength="80" placeholder="Ej.: S. L., GmbH, autónomo"></div>
+              <div class="company-field-full"><label for="company-address">Domicilio social</label><input id="company-address" name="company-address" type="text" maxlength="180" autocomplete="street-address" placeholder="Calle, número, ciudad y código postal" data-company-required></div>
+              <div><label for="company-phone">Teléfono de contacto</label><input id="company-phone" name="company-phone" type="tel" autocomplete="tel" maxlength="40" placeholder="+34 600 000 000" data-company-required></div>
+              <div><label for="company-website">Página web (opcional)</label><input id="company-website" name="company-website" type="url" maxlength="180" placeholder="https://tuempresa.eu"></div>
+            </div>
+            <p class="form-help">El correo de acceso será también el correo de contacto de la empresa. Estos datos solo se guardan en esta demostración.</p>
+          </fieldset>
           <div><label class="sr-only" for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="new-password" placeholder="Crea una contraseña (mínimo 6 caracteres)" minlength="6" required></div>
           <div id="confirm-field"><label class="sr-only" for="confirm-password">Repite la contraseña</label><input id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" placeholder="Repite la contraseña" minlength="6" required></div>
         </div>

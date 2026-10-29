@@ -20,7 +20,7 @@
 2. Pulsa **Encuesta**, **Paquetes** o **Empresas recomendadas**. Rumbo te llevará a `acceso.html` para registrarte o iniciar sesión.
 3. Al crear una cuenta de persona candidata, volverás a la sección que habías elegido. Las rutas también comprueban la sesión si se abren directamente.
 4. Tras entrar con una cuenta de persona candidata, el botón de acceso se convierte en un icono de perfil. Desde ahí puedes editar los datos, preparar el CV y consultar las ofertas guardadas.
-5. Para probar el portal de empresas, entra en **Acceder / crear cuenta**, selecciona **Soy empresa** y crea la cuenta de demostración. Después guarda una oferta desde **Publicar una oferta**.
+5. Para probar el portal de empresas, entra en **Acceder / crear cuenta**, selecciona **Soy empresa** y completa nombre de contacto, nombre legal, CIF/NIF o NIF-IVA, país, domicilio y teléfono. Después guarda una oferta desde **Publicar una oferta**. Si ya tienes una cuenta de persona candidata con ese correo, puedes crear además un perfil de empresa con el mismo correo, seleccionando **Soy empresa**.
 
 ## Subida a GitHub Pages
 Sube todos los archivos de la web al nivel principal del repositorio, conservando los nombres. `index.html` debe quedar en la raíz para que GitHub Pages lo abra al visitar el sitio. Tras cada cambio, vuelve a subir los archivos modificados y espera a que Pages termine de publicarlos.

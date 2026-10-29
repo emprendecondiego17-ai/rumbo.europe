@@ -100,7 +100,7 @@
         sessionStorage.setItem("rumboDemoProfile", JSON.stringify(sessionAccount));
         localStorage.setItem("rumboDemoProfile", JSON.stringify(sessionAccount));
         var accounts = readStored("rumboDemoAccounts", []);
-        var savedAccount = accounts.find(function (item) { return item.email === account.email; });
+        var savedAccount = accounts.find(function (item) { return item.email === account.email && item.role === "candidato"; });
         if (savedAccount) {
           savedAccount.name = updated.name;
           writeStored("rumboDemoAccounts", accounts);
@@ -299,8 +299,95 @@
     });
   }
 
+  function initializeCompanyProfile() {
+    var panel = document.getElementById("company-profile-panel");
+    var form = document.getElementById("company-profile-form");
+    var account = readSession();
+    if (!panel || !form || !account || account.role !== "empresa") return;
+    panel.hidden = false;
+    var summary = document.getElementById("company-profile-summary");
+    var edit = document.getElementById("company-profile-edit");
+    var cancel = document.getElementById("company-profile-cancel");
+    var status = document.getElementById("company-profile-status");
+    var data = account.company || {};
+
+    function fillForm(company) {
+      ["companyName", "taxId", "country", "legalForm", "address", "phone", "website"].forEach(function (field) {
+        if (form.elements[field]) form.elements[field].value = company[field] || "";
+      });
+    }
+    function showSummary(company) {
+      var hasMinimumData = !!(company.companyName && company.taxId && company.country && company.address && company.phone);
+      if (summary) summary.hidden = !hasMinimumData;
+      form.hidden = hasMinimumData;
+      if (edit) edit.hidden = !hasMinimumData;
+      if (cancel) cancel.hidden = true;
+      if (!hasMinimumData) return;
+      document.getElementById("company-summary-name").textContent = company.companyName;
+      document.getElementById("company-summary-tax").textContent = (company.legalForm ? company.legalForm + " · " : "") + company.taxId + " · " + company.country;
+      document.getElementById("company-summary-address").textContent = company.address;
+      document.getElementById("company-summary-contact").textContent = "Contacto: " + account.email + " · " + company.phone + (company.website ? " · " + company.website : "");
+    }
+    fillForm(data);
+    showSummary(data);
+
+    if (edit) edit.addEventListener("click", function () {
+      form.hidden = false;
+      if (summary) summary.hidden = true;
+      edit.hidden = true;
+      if (cancel) cancel.hidden = false;
+      status.textContent = "";
+    });
+    if (cancel) cancel.addEventListener("click", function () {
+      fillForm(data);
+      showSummary(data);
+      status.textContent = "";
+    });
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var updatedCompany = {
+        companyName: form.elements.companyName.value.trim(),
+        taxId: form.elements.taxId.value.trim().toUpperCase(),
+        country: form.elements.country.value,
+        legalForm: form.elements.legalForm.value.trim(),
+        address: form.elements.address.value.trim(),
+        phone: form.elements.phone.value.trim(),
+        website: form.elements.website.value.trim(),
+        contactEmail: account.email
+      };
+      try {
+        var accounts = readStored("rumboDemoAccounts", []);
+        var storedAccount = accounts.find(function (item) { return item.email === account.email && item.role === "empresa"; });
+        if (storedAccount) {
+          storedAccount.company = updatedCompany;
+          writeStored("rumboDemoAccounts", accounts);
+        }
+        account.company = updatedCompany;
+        sessionStorage.setItem("rumboDemoProfile", JSON.stringify(account));
+        localStorage.setItem("rumboDemoProfile", JSON.stringify(account));
+        data = updatedCompany;
+        showSummary(data);
+        status.textContent = "Datos de empresa guardados en este navegador.";
+        accountControls();
+      } catch (error) {
+        status.textContent = "No se pudieron guardar los datos. Comprueba el espacio disponible en el navegador.";
+      }
+    });
+  }
+
+  function fillCompanyOfferForm() {
+    var account = readSession();
+    var form = document.getElementById("offer-form");
+    if (!form || !account || account.role !== "empresa") return;
+    var company = account.company || {};
+    if (form.elements.company && !form.elements.company.value) form.elements.company.value = company.companyName || "";
+    if (form.elements.email && !form.elements.email.value) form.elements.email.value = company.contactEmail || account.email || "";
+  }
+
   accountControls();
   initializeProfileEditor();
   initializeCvBuilder();
   initializeSavedOffers();
+  initializeCompanyProfile();
+  fillCompanyOfferForm();
 }());

@@ -95,6 +95,12 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
 .cv-preview section h2 { margin: 0 0 6px; font-size: 1rem; letter-spacing: 0; text-transform: uppercase; }
 .cv-preview section p { margin: 0; color: #394b63; line-height: 1.7; }
 .saved-offers-empty { margin-top: 12px; }
+.company-profile-panel { padding-bottom: 36px; }
+.company-profile-panel .section-heading { margin-bottom: 16px; }
+.company-profile-summary { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 22px; }
+.company-profile-summary h3 { margin: 11px 0 5px; }
+.company-profile-summary p { margin: 4px 0; color: var(--muted); font-size: .85rem; }
+.company-profile-summary .button { flex: 0 0 auto; }
 .offer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .save-offer { border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; background: white; color: var(--blue); font-size: .76rem; font-weight: 750; cursor: pointer; }
 .save-offer:hover, .save-offer.is-saved { border-color: #efd975; color: #735900; background: #fff8d9; }
@@ -259,6 +265,15 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
 .auth-fields { display: grid; gap: 13px; }
 .auth-fields input { width: 100%; min-height: 47px; border: 1px solid #d7e1ec; border-radius: 12px; padding: 0 13px; color: var(--ink); }
 .auth-fields input:focus { outline: 3px solid #a9c9f455; border-color: var(--blue-2); }
+.company-auth-fields { min-width: 0; margin: 2px 0; padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: #f9fbff; }
+.company-auth-fields legend { padding: 0 7px; color: var(--navy); font-size: .9rem; font-weight: 800; }
+.company-auth-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.company-auth-grid > div { min-width: 0; }
+.company-auth-grid .company-field-full { grid-column: 1 / -1; }
+.company-auth-grid label { display: block; margin-bottom: 5px; color: #344a67; font-size: .75rem; font-weight: 750; }
+.company-auth-grid input, .company-auth-grid select { width: 100%; min-height: 42px; padding: 8px 10px; border: 1px solid #d7e1ec; border-radius: 10px; background: #fff; color: var(--ink); font-size: .82rem; }
+.company-auth-grid input:focus, .company-auth-grid select:focus { outline: 3px solid #a9c9f455; border-color: var(--blue-2); }
+.company-auth-fields .form-help { margin-bottom: 0; }
 .auth-card .button { width: 100%; margin-top: 16px; }
 .auth-toggle { color: var(--blue); border: 0; padding: 5px; background: transparent; font-weight: 750; }
 .auth-switch { text-align: center; color: var(--muted); font-size: .84rem; margin: 13px 0 0; }
@@ -294,6 +309,7 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
   .login-story { padding-bottom: 0; }
   .offer-grid { grid-template-columns: 1fr; }
   .profile-shortcuts { grid-template-columns: 1fr; }
+  .company-profile-summary { align-items: flex-start; flex-direction: column; }
 }
 @media (max-width: 700px) {
   .wrap { width: min(100% - 32px, 560px); }
@@ -319,6 +335,8 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
   .form-card, .auth-card { padding: 21px 17px; }
   .form-grid { grid-template-columns: 1fr; }
   .form-field.full { grid-column: auto; }
+  .company-auth-grid { grid-template-columns: 1fr; }
+  .company-auth-grid .company-field-full { grid-column: auto; }
   .role-select { grid-template-columns: 1fr 1fr; }
   .role-option span { min-height: 86px; padding: 10px; }
   .social-row { grid-template-columns: 1fr; }

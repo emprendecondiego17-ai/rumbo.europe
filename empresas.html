@@ -1,14 +1,34 @@
 <!doctype html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rumbo — Portal para empresas</title><link rel="stylesheet" href="styles.css?v=7"><script src="script.js?v=7" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rumbo — Portal para empresas</title><link rel="stylesheet" href="styles.css?v=11"><script src="script.js?v=11" defer></script><script src="perfil.js?v=2" defer></script></head>
 <body>
-  <header class="site-header"><div class="wrap topbar"><a class="brand" href="empresas.html"><span class="brand-mark">✦</span><span>rumbo</span></a><button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="company-nav">☰</button><nav class="main-nav" id="company-nav" aria-label="Navegación para empresas"><a href="empresas.html" aria-current="page">Inicio</a><a href="paquetes-empresas.html">Paquetes</a><a href="publicar-oferta.html" class="nav-cta">Publicar una oferta →</a></nav></div></header>
+  <header class="site-header"><div class="wrap topbar"><a class="brand" href="empresas.html"><span class="brand-mark">✦</span><span>rumbo</span></a><button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="company-nav">☰</button><nav class="main-nav" id="company-nav" aria-label="Navegación para empresas"><a href="empresas.html" aria-current="page">Inicio</a><a href="paquetes-empresas.html">Paquetes</a><a href="publicar-oferta.html" class="nav-cta">Publicar una oferta →</a><a class="nav-cta" data-account-control href="acceso.html?access=1">Acceder / crear cuenta</a></nav></div></header>
   <main class="page-main">
     <section class="wrap company-hero">
       <span class="eyebrow">Portal de empresas</span>
       <h1>Encuentra personas con ganas de dar el siguiente paso.</h1>
       <p>Rumbo plantea conectar empresas europeas con personas que buscan nuevas oportunidades, en hostelería, logística, industria, tecnología, cuidados y otros sectores.</p>
       <div class="hero-actions"><a class="button" href="publicar-oferta.html">Preparar una oferta <span>→</span></a><a class="button secondary" href="paquetes-empresas.html">Consultar paquetes</a></div>
+    </section>
+    <section class="wrap company-profile-panel" id="company-profile-panel" hidden>
+      <div class="section-heading"><div><span class="eyebrow">Cuenta de empresa</span><h2>Datos de tu empresa</h2></div><p>Completa la información legal y de contacto para que quede asociada a tu cuenta de demostración.</p></div>
+      <div class="surface company-profile-summary" id="company-profile-summary" hidden>
+        <div><span class="pill">Perfil de empresa</span><h3 id="company-summary-name"></h3><p id="company-summary-tax"></p><p id="company-summary-address"></p><p id="company-summary-contact"></p></div>
+        <button class="button secondary" id="company-profile-edit" type="button">Editar datos</button>
+      </div>
+      <form class="surface form-card" id="company-profile-form" hidden>
+        <div class="form-grid">
+          <div class="form-field"><label for="company-name">Nombre legal o comercial</label><input id="company-name" name="companyName" required maxlength="120"></div>
+          <div class="form-field"><label for="company-tax-id">CIF / NIF / NIF-IVA</label><input id="company-tax-id" name="taxId" required minlength="7" maxlength="24"></div>
+          <div class="form-field"><label for="company-country">País de registro</label><select id="company-country" name="country" required><option value="">Selecciona un país</option><option>España</option><option>Alemania</option><option>Austria</option><option>Bélgica</option><option>Dinamarca</option><option>Francia</option><option>Irlanda</option><option>Italia</option><option>Malta</option><option>Noruega</option><option>Países Bajos</option><option>Portugal</option><option>Suecia</option><option>Otro país europeo</option></select></div>
+          <div class="form-field"><label for="company-legal-form">Forma jurídica (opcional)</label><input id="company-legal-form" name="legalForm" maxlength="80" placeholder="S. L., GmbH, autónomo…"></div>
+          <div class="form-field full"><label for="company-address">Domicilio social</label><input id="company-address" name="address" required maxlength="180"></div>
+          <div class="form-field"><label for="company-phone">Teléfono de contacto</label><input id="company-phone" name="phone" type="tel" required maxlength="40"></div>
+          <div class="form-field"><label for="company-website">Página web (opcional)</label><input id="company-website" name="website" type="url" maxlength="180" placeholder="https://tuempresa.eu"></div>
+        </div>
+        <div class="profile-form-actions"><button class="button" type="submit">Guardar datos de empresa</button><button class="button secondary" id="company-profile-cancel" type="button" hidden>Cancelar</button></div>
+        <p class="status-message" id="company-profile-status" role="status" aria-live="polite"></p>
+      </form>
     </section>
     <section class="why-strip"><div class="wrap grid-3">
       <article class="why-point"><span class="tile-icon">◎</span><div><h3>Publicación ordenada</h3><p>Describe puesto, país, sector, duración, salario y requisitos.</p></div></article>

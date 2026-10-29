@@ -468,7 +468,7 @@
 
   function goToPortal(account) {
     try {
-      var profileSession = JSON.stringify({ name: account.name, email: account.email, role: account.role });
+      var profileSession = JSON.stringify({ name: account.name, email: account.email, role: account.role, company: account.company || null });
       sessionStorage.setItem("rumboDemoProfile", profileSession);
       localStorage.setItem("rumboDemoProfile", profileSession);
     } catch (error) { /* La demo no depende de la sesión. */ }
@@ -476,6 +476,25 @@
     var safePage = requestedPage.split(/[?#]/)[0];
     var isSafePage = /^[a-z0-9-]+\.html$/i.test(safePage) && protectedPageRoles[safePage] === account.role;
     window.location.href = isSafePage ? safePage : (account.role === "empresa" ? "empresas.html" : "index.html");
+  }
+
+  function updateAuthRegistrationFields() {
+    var form = document.getElementById("auth-form");
+    var companyFields = document.getElementById("company-fields");
+    if (!form || !companyFields) return;
+    var signup = form.dataset.mode === "signup";
+    var roleInput = form.querySelector('input[name="role"]:checked');
+    var isCompanySignup = signup && roleInput && roleInput.value === "empresa";
+    companyFields.hidden = !isCompanySignup;
+    companyFields.querySelectorAll("[data-company-required]").forEach(function (field) {
+      field.required = isCompanySignup;
+    });
+    var nameLabel = form.querySelector('label[for="name"]');
+    var nameInput = document.getElementById("name");
+    var emailInput = document.getElementById("email");
+    if (nameLabel) nameLabel.textContent = isCompanySignup ? "Nombre de la persona de contacto" : "Nombre";
+    if (nameInput) nameInput.placeholder = isCompanySignup ? "Nombre de la persona de contacto" : "Tu nombre";
+    if (emailInput) emailInput.placeholder = isCompanySignup ? "Correo de contacto de la empresa" : "Correo electrónico";
   }
 
   document.querySelectorAll("[data-auth-mode]").forEach(function (button) {
@@ -501,6 +520,7 @@
       document.getElementById("password").autocomplete = signup ? "new-password" : "current-password";
       document.getElementById("auth-status").textContent = "";
       document.querySelectorAll("[data-auth-mode]").forEach(function (item) { item.hidden = item.dataset.authMode === mode; });
+      updateAuthRegistrationFields();
     });
   });
 
@@ -518,6 +538,10 @@
       var requestedRoleInput = authForm.querySelector('input[name="role"][value="' + requiredRole + '"]');
       if (requestedRoleInput) requestedRoleInput.checked = true;
     }
+    authForm.querySelectorAll('input[name="role"]').forEach(function (input) {
+      input.addEventListener("change", updateAuthRegistrationFields);
+    });
+    updateAuthRegistrationFields();
     var requestedNext = accessParams.get("next");
     var destinationNames = {
       "encuesta.html": "la encuesta",
@@ -556,16 +580,37 @@
           var confirmation = document.getElementById("confirm-password").value;
           if (requiredRole && role !== requiredRole) throw new Error("Para abrir esta sección, selecciona el perfil indicado.");
           if (password !== confirmation) throw new Error("Las contraseñas no coinciden. Comprueba las dos casillas.");
-          if (accounts.some(function (item) { return item.email === email; })) throw new Error("Ya existe una cuenta de prueba con ese correo en este navegador. Inicia sesión.");
+          if (accounts.some(function (item) { return item.email === email && item.role === role; })) throw new Error("Ya existe una cuenta de este tipo con ese correo en este navegador. Inicia sesión con ese perfil.");
           var salt = createSalt();
-          account = { name: name, email: email, role: role, salt: salt, passwordHash: await passwordHash(password, salt) };
+          var companyDetails = null;
+          if (role === "empresa") {
+            companyDetails = {
+              companyName: document.getElementById("company-name").value.trim(),
+              taxId: document.getElementById("company-tax-id").value.trim().toUpperCase(),
+              country: document.getElementById("company-country").value,
+              legalForm: document.getElementById("company-legal-form").value.trim(),
+              address: document.getElementById("company-address").value.trim(),
+              phone: document.getElementById("company-phone").value.trim(),
+              website: document.getElementById("company-website").value.trim(),
+              contactEmail: email
+            };
+          }
+          account = { name: name, email: email, role: role, company: companyDetails, salt: salt, passwordHash: await passwordHash(password, salt) };
           accounts.push(account);
           localStorage.setItem(ACCOUNT_KEY, JSON.stringify(accounts));
           status.textContent = "Cuenta creada. Entrando en Rumbo…";
         } else {
-          account = accounts.find(function (item) { return item.email === email; });
-          if (!account) throw new Error("No encuentro esa cuenta en este navegador. Pulsa «Crear cuenta» primero.");
-          if (requiredRole && account.role !== requiredRole) throw new Error("Esta sección requiere una cuenta de " + (requiredRole === "empresa" ? "empresa" : "persona candidata") + ". Usa el perfil correcto.");
+          if (requiredRole && role !== requiredRole) throw new Error("Esta sección requiere el perfil de " + (requiredRole === "empresa" ? "empresa" : "persona candidata") + ". Selecciona la opción correcta.");
+          account = accounts.find(function (item) { return item.email === email && item.role === role; });
+          if (!account) {
+            var otherRoleAccount = accounts.find(function (item) { return item.email === email; });
+            if (otherRoleAccount) {
+              var registeredRole = otherRoleAccount.role === "empresa" ? "empresa" : "persona candidata";
+              var selectedRole = role === "empresa" ? "empresa" : "persona candidata";
+              throw new Error("Ese correo tiene una cuenta de " + registeredRole + ". Para entrar como " + selectedRole + ", pulsa «Crear cuenta» y completa ese perfil; puedes usar el mismo correo.");
+            }
+            throw new Error("No encuentro una cuenta de " + (role === "empresa" ? "empresa" : "persona candidata") + " con ese correo en este navegador. Pulsa «Crear cuenta» para registrarla.");
+          }
           var enteredHash = await passwordHash(password, account.salt);
           if (enteredHash !== account.passwordHash) throw new Error("La contraseña no coincide. Vuelve a intentarlo.");
           status.textContent = "Sesión iniciada. Entrando en Rumbo…";
