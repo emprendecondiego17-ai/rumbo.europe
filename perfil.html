@@ -4,9 +4,9 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08275c">
   <title>Rumbo — Mi perfil</title>
-  <link rel="stylesheet" href="styles.css?v=11">
-  <script src="script.js?v=11" defer></script>
-  <script src="perfil.js?v=2" defer></script>
+  <link rel="stylesheet" href="styles.css?v=13">
+  <script src="supabase-config.js?v=1" defer></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script><script src="cloud.js?v=1" defer></script><script src="script.js?v=13" defer></script>
+  <script src="perfil.js?v=4" defer></script>
 </head>
 <body>
   <header class="site-header"><div class="wrap topbar">
@@ -24,7 +24,7 @@
         <a href="perfil.html" aria-current="page">Mi perfil</a><a href="curriculum.html">Mi CV</a><a href="guardadas.html">Ofertas guardadas</a>
       </nav>
       <form class="surface form-card" id="profile-form">
-        <div class="section-heading"><div><span class="pill">Datos personales</span><h2>Información de tu perfil</h2></div><p>Estos datos se guardan en este navegador y no se envían a Rumbo.</p></div>
+        <div class="section-heading"><div><span class="pill">Datos personales</span><h2>Información de tu perfil</h2></div><p>Tu información se guarda en tu cuenta y puedes actualizarla cuando quieras.</p></div>
         <div class="form-grid">
           <div class="form-field"><label for="profile-name">Nombre</label><input id="profile-name" name="name" autocomplete="name" required maxlength="100"></div>
           <div class="form-field"><label for="profile-email">Correo electrónico</label><input id="profile-email" name="email" type="email" readonly></div>
@@ -43,6 +43,6 @@
       </div>
     </section>
   </main>
-  <footer class="footer"><div class="wrap footer-inner"><a class="brand" href="index.html"><span class="brand-mark">✦</span><span>rumbo</span></a><span>Perfil de demostración · datos guardados en este navegador</span></div></footer>
+  <footer class="footer"><div class="wrap footer-inner"><a class="brand" href="index.html"><span class="brand-mark">✦</span><span>rumbo</span></a><span>Tu perfil y preferencias de Rumbo</span></div></footer>
 </body>
 </html>

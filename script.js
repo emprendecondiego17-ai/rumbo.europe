@@ -1,9 +1,7 @@
 (function () {
   "use strict";
 
-  var ACCOUNT_KEY = "rumboDemoAccounts";
-  var DEMO_OFFERS_KEY = "rumboDemoOffers";
-  var HASH_ITERATIONS = 120000;
+  var cloudOffers = [];
   var protectedPageRoles = {
     "candidatos.html": "candidato",
     "encuesta.html": "candidato",
@@ -14,7 +12,8 @@
     "guardadas.html": "candidato",
     "empresas.html": "empresa",
     "paquetes-empresas.html": "empresa",
-    "publicar-oferta.html": "empresa"
+    "publicar-oferta.html": "empresa",
+    "candidatos-empresa.html": "empresa"
   };
 
   function currentProfile() {
@@ -179,25 +178,27 @@
     }
   }
 
-  function getDemoOffers() {
-    var offers = readJson(DEMO_OFFERS_KEY, []);
-    return Array.isArray(offers) ? offers.filter(function (offer) {
-      return offer && typeof offer === "object" && offer.isDemo === true && offer.country && offer.title;
-    }).map(function (offer) {
-      var email = String(offer.contactEmail || "").trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
-      offer.url = "mailto:" + encodeURIComponent(email).replace(/%40/gi, "@");
-      offer.source = "Contacto directo";
-      return offer;
-    }).filter(Boolean) : [];
+  function getAllOffers() {
+    return curatedOffers.concat(cloudOffers);
   }
 
-  function getAllOffers() {
-    return curatedOffers.concat(getDemoOffers());
+  function offerRatingHtml(offer) {
+    if (!offer || !offer.isCompanyOffer) return "";
+    var average = Number(offer.averageRating || 0);
+    var count = Number(offer.ratingCount || 0);
+    var userRating = Number(offer.userRating || 0);
+    var profile = currentProfile();
+    var stars = "";
+    if (profile && profile.role === "candidato") {
+      for (var value = 1; value <= 5; value += 1) {
+        stars += '<button class="rating-star' + (value <= userRating ? " is-selected" : "") + '" type="button" data-rate-offer="' + value + '" data-offer-id="' + escapeHtml(offer.id) + '" aria-label="Valorar con ' + value + ' estrellas" aria-pressed="' + String(value === userRating) + '">★</button>';
+      }
+    }
+    return '<div class="offer-rating" aria-label="Valoraciones de la oferta"><span class="offer-rating-score">' + (count ? average.toFixed(1) : "—") + '</span><span class="offer-rating-stars" aria-hidden="true">' + "★".repeat(Math.max(0, Math.min(5, Math.round(average)))) + "☆".repeat(Math.max(0, 5 - Math.round(average))) + '</span><span class="offer-rating-count">' + count + (count === 1 ? " valoración" : " valoraciones") + '</span>' + (stars ? '<span class="offer-rating-input" aria-label="Tu valoración">' + stars + '</span>' : '') + '</div>';
   }
 
   function offerCardHtml(offer, badge) {
-    var contactLabel = offer.isDemo ? "Contactar con la empresa" : "Ver oferta en " + offer.source + " ↗";
+    var contactLabel = offer.isDemo || offer.isCompanyOffer ? "Contactar con la empresa" : "Ver oferta en " + offer.source + " ↗";
     var savedPayload = {
       key: String(offer.id || offer.url || (offer.company + "-" + offer.title)),
       company: offer.company || "",
@@ -212,14 +213,25 @@
       details: offer.details || "",
       url: offer.url || "",
       source: offer.source || "",
-      isDemo: !!offer.isDemo
+      isDemo: !!offer.isDemo,
+      ownerEmail: offer.ownerEmail || "",
+      ownerId: offer.ownerId || "",
+      vacancies: Number(offer.vacancies || 1),
+      averageRating: Number(offer.averageRating || 0),
+      ratingCount: Number(offer.ratingCount || 0),
+      favoritesCount: Number(offer.favoritesCount || 0),
+      viewsCount: Number(offer.viewsCount || 0)
     };
-    var tags = '<div class="offer-meta"><span>' + escapeHtml(offer.sectorLabel) + '</span><span>' + escapeHtml(offer.durationLabel) + '</span></div>';
-    return '<article class="surface offer-card">' +
+    var saveControl = offer.isCompanyOffer
+      ? '<button class="save-offer" type="button" data-save-offer="' + escapeHtml(savedPayload.key) + '" data-offer="' + escapeHtml(JSON.stringify(savedPayload)) + '" aria-pressed="false">☆ Guardar oferta</button>'
+      : '';
+    var tags = '<div class="offer-meta"><span>' + escapeHtml(offer.sectorLabel) + '</span><span>' + escapeHtml(offer.durationLabel) + '</span><span>Vacantes: ' + escapeHtml(offer.vacancies || 1) + '</span></div>';
+    return '<article class="surface offer-card" data-offer-card-id="' + escapeHtml(offer.id || "") + '" data-offer-id="' + escapeHtml(offer.id || "") + '" data-offer-key="' + escapeHtml(savedPayload.key) + '" data-offer-owner="' + escapeHtml(offer.ownerId || offer.ownerEmail || "") + '">' +
       '<div class="offer-head"><div><h3>' + escapeHtml(offer.title) + '</h3>' +
       '<div class="offer-company">' + escapeHtml(offer.company) + ' · ' + escapeHtml(offer.location || "Ubicación no indicada") + '</div></div>' +
       '<span class="pill">' + escapeHtml(offer.country) + '</span></div>' +
       tags +
+      offerRatingHtml(offer) +
       '<p class="offer-details">' + escapeHtml(offer.details) + '</p>' +
       '<p class="offer-details"><strong>Alojamiento indicado:</strong> ' + escapeHtml(offer.housing) +
       '<br><strong>Condición/plazo:</strong> ' + escapeHtml(offer.deadline) + '</p>' +
@@ -227,8 +239,8 @@
       (offer.isDemo ? '<span class="pill demo-badge">Anuncio de demostración · no verificado</span>' : '') +
       (badge ? '<span class="pill gold offer-badge">' + escapeHtml(badge) + '</span>' : '') +
       '<div class="offer-bottom"><strong>' + escapeHtml(offer.salary || "Salario no indicado") + '</strong>' +
-      '<div class="offer-actions"><a href="' + escapeHtml(offer.url) + '" ' + (offer.isDemo ? '' : 'target="_blank" rel="noopener noreferrer"') + '>' + escapeHtml(contactLabel) + '</a>' +
-      '<button class="save-offer" type="button" data-save-offer="' + escapeHtml(savedPayload.key) + '" data-offer="' + escapeHtml(JSON.stringify(savedPayload)) + '" aria-pressed="false">☆ Guardar oferta</button></div></div>' +
+      '<div class="offer-actions"><a href="' + escapeHtml(offer.url) + '" ' + (offer.isDemo || offer.isCompanyOffer ? '' : 'target="_blank" rel="noopener noreferrer"') + '>' + escapeHtml(contactLabel) + '</a>' + saveControl + '</div></div>' +
+      (offer.isCompanyOffer ? '<p class="save-status" role="status" aria-live="polite"></p>' : '') +
       (offer.isDemo ? '<button class="remove-demo-offer" type="button" data-remove-offer="' + escapeHtml(offer.id) + '">Retirar de esta demostración</button>' : '') +
       '</article>';
   }
@@ -281,16 +293,56 @@
       return offerCardHtml(offer, offer.isDemo ? "Oferta enviada desde este navegador" : "");
     }).join("");
 
-    var sponsored = offers.filter(function (offer) { return offer.isDemo && offer.sponsored; });
+    var sponsored = offers.filter(function (offer) { return offer.sponsored; });
     var sponsorList = document.getElementById("paid-sponsored-offers");
     var sponsorEmpty = document.getElementById("no-paid-sponsors");
     if (sponsorList) sponsorList.innerHTML = sponsored.map(function (offer) {
-      return offerCardHtml(offer, "Patrocinado · demostración");
+      return offerCardHtml(offer, "Oferta patrocinada");
     }).join("");
     if (sponsorEmpty) sponsorEmpty.hidden = sponsored.length > 0;
 
     renderHomeSponsors();
     if (document.getElementById("map-country-select")) updateMapCountry(selectedCountry || "cualquiera");
+    registerOfferViewTracking(document);
+  }
+
+  function registerOfferViewTracking(root) {
+    var candidate = currentProfile();
+    if (!candidate || candidate.role !== "candidato" || !window.IntersectionObserver || !root || !root.querySelectorAll) return;
+    if (window.RumboCloud && window.RumboCloud.isConfigured) {
+      var cloudCards = root.querySelectorAll(".offer-card[data-offer-id]");
+      if (!cloudCards.length) return;
+      var cloudObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          cloudObserver.unobserve(entry.target);
+          var offerId = entry.target.getAttribute("data-offer-id");
+          if (!offerId || entry.target.getAttribute("data-view-recorded") === "true") return;
+          entry.target.setAttribute("data-view-recorded", "true");
+          window.RumboCloud.recordView(offerId).catch(function (error) { console.error("No se pudo registrar la visita:", error); });
+        });
+      }, { threshold: 0.45 });
+      cloudCards.forEach(function (card) { cloudObserver.observe(card); });
+      return;
+    }
+    var cards = root.querySelectorAll(".offer-card[data-offer-key][data-offer-owner]");
+    if (!cards.length) return;
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        var offerKey = entry.target.getAttribute("data-offer-key");
+        var ownerEmail = entry.target.getAttribute("data-offer-owner");
+        if (!offerKey || !ownerEmail) return;
+        var views = readJson("rumboOfferViews", []);
+        if (!Array.isArray(views)) views = [];
+        var alreadyViewed = views.some(function (view) { return view.offerKey === offerKey && view.candidateEmail === candidate.email; });
+        if (alreadyViewed) return;
+        views.push({ offerKey: offerKey, ownerEmail: ownerEmail, candidateEmail: candidate.email, viewedAt: Date.now() });
+        try { localStorage.setItem("rumboOfferViews", JSON.stringify(views)); } catch (error) { /* El contador es opcional en la demo. */ }
+      });
+    }, { threshold: 0.55 });
+    cards.forEach(function (card) { observer.observe(card); });
   }
 
   function renderHomeSponsors() {
@@ -299,7 +351,7 @@
     if (!container) return;
 
     var seenCompanies = {};
-    var sponsored = getDemoOffers().filter(function (offer) {
+    var sponsored = getAllOffers().filter(function (offer) {
       var companyKey = String(offer.company || "").trim().toLowerCase();
       if (!offer.sponsored || !companyKey || seenCompanies[companyKey]) return false;
       seenCompanies[companyKey] = true;
@@ -309,12 +361,12 @@
     container.innerHTML = sponsored.map(function (offer) {
       var initials = String(offer.company || "R").trim().split(/\s+/).slice(0, 2).map(function (word) { return word.charAt(0); }).join("").toUpperCase();
       return '<article class="surface sponsor-card">' +
-        '<div class="sponsor-card-top"><span class="sponsor-mark" aria-hidden="true">' + escapeHtml(initials || "R") + '</span><span class="pill gold">Patrocinado · demostración</span></div>' +
+        '<div class="sponsor-card-top"><span class="sponsor-mark" aria-hidden="true">' + escapeHtml(initials || "R") + '</span><span class="pill gold">Patrocinado</span></div>' +
         '<h3>' + escapeHtml(offer.company) + '</h3>' +
         '<p class="sponsor-role">' + escapeHtml(offer.title) + '</p>' +
         '<p class="sponsor-location">' + escapeHtml(offer.country) + (offer.location ? ' · ' + escapeHtml(offer.location) : '') + ' · ' + escapeHtml(offer.sectorLabel) + '</p>' +
         '<a class="text-link" href="recomendadas.html#mapa">Ver ofertas de esta empresa <span aria-hidden="true">→</span></a>' +
-        '<small>Patrocinio de demostración; no confirma una relación comercial real.</small>' +
+        '<small>Anuncio patrocinado por la empresa.</small>' +
         '</article>';
     }).join("");
     if (empty) empty.hidden = sponsored.length > 0;
@@ -340,14 +392,15 @@
       var message = result.querySelector("span");
       if (heading) heading.textContent = countryName === "cualquiera" ? "Toda Europa" : countryName;
       if (message) message.textContent = countryName === "cualquiera"
-        ? offers.length + (offers.length === 1 ? " oferta disponible en la demostración." : " ofertas disponibles en la demostración.")
-        : (selected.length ? selected.length + (selected.length === 1 ? " oferta para este país." : " ofertas para este país.") : "Aún no tenemos ofertas de demostración en este país.");
+        ? offers.length + (offers.length === 1 ? " oferta disponible en Rumbo." : " ofertas disponibles en Rumbo.")
+        : (selected.length ? selected.length + (selected.length === 1 ? " oferta para este país." : " ofertas para este país.") : "Aún no tenemos ofertas registradas en este país.");
     }
 
     if (list) {
       list.innerHTML = selected.length ? selected.map(function (offer) {
         return offerCardHtml(offer, offer.isDemo ? "Oferta de demostración" : "Oferta disponible");
       }).join("") : '<div class="notice map-empty"><strong>Aún no tenemos ofertas para ' + escapeHtml(countryName) + '.</strong><br>Prueba otro país o revisa el portal oficial de empleo europeo en <a href="https://eures.europa.eu/index_es" target="_blank" rel="noopener noreferrer">EURES ↗</a>.</div>';
+      registerOfferViewTracking(list);
     }
   }
 
@@ -405,8 +458,6 @@
     updateMapCountry("cualquiera");
   }
 
-  protectPageAndLinks();
-
   var menuButtons = document.querySelectorAll(".menu-toggle");
   menuButtons.forEach(function (button) {
     button.addEventListener("click", function () {
@@ -418,63 +469,83 @@
     });
   });
 
-  fillCountrySelect(document.getElementById("country"), !!document.getElementById("survey-form"));
-  fillCountrySelect(document.querySelector('#offer-form select[name="country"]'), false);
-  initializeMap();
-  renderCollections("cualquiera");
+  function startRumboUi() {
+    protectPageAndLinks();
+    var currentPage = window.location.pathname.split("/").pop().toLowerCase();
+    var pendingDestination = "";
+    try { pendingDestination = localStorage.getItem("rumboPendingDestination") || ""; } catch (error) { pendingDestination = ""; }
+    var activeProfile = currentProfile();
+    var resumeDestination = new URLSearchParams(window.location.search).get("resume") || pendingDestination;
+    if (currentPage === "index.html" && resumeDestination && activeProfile && protectedPageRoles[resumeDestination] === activeProfile.role) {
+      try { localStorage.removeItem("rumboPendingDestination"); } catch (error) { /* La portada sigue disponible si no hay almacenamiento local. */ }
+      window.location.replace(resumeDestination);
+      return;
+    }
+    fillCountrySelect(document.getElementById("country"), !!document.getElementById("survey-form"));
+    fillCountrySelect(document.querySelector('#offer-form select[name="country"]'), false);
+    initializeMap();
+    renderCollections("cualquiera");
+    if (window.RumboCloud && window.RumboCloud.isConfigured) {
+      window.RumboCloud.loadOffers().catch(function (error) { console.error("No se pudieron cargar las ofertas:", error); });
+      window.RumboCloud.subscribeOffers(function () {
+        window.RumboCloud.loadOffers().catch(function (error) { console.error("No se pudieron actualizar las ofertas:", error); });
+      });
+    }
+  }
+
+  if (window.RumboCloud && window.RumboCloud.ready) window.RumboCloud.ready.then(startRumboUi);
+  else startRumboUi();
+
+  window.addEventListener("rumbo:offers", function (event) {
+    cloudOffers = Array.isArray(event.detail) ? event.detail : [];
+    var selectedCountry = document.getElementById("map-country-select");
+    renderCollections(selectedCountry ? selectedCountry.value : "cualquiera");
+  });
 
   document.addEventListener("click", function (event) {
-    var removeButton = event.target.closest("[data-remove-offer]");
-    if (!removeButton) return;
-    var id = removeButton.getAttribute("data-remove-offer");
-    var remaining = getDemoOffers().filter(function (offer) { return offer.id !== id; });
-    try {
-      localStorage.setItem(DEMO_OFFERS_KEY, JSON.stringify(remaining));
-      renderCollections(document.getElementById("map-country-select") ? document.getElementById("map-country-select").value : "cualquiera");
-    } catch (error) {
-      window.alert("No se pudo retirar la oferta en este navegador.");
+    var offerLink = event.target.closest(".offer-card a[href]");
+    if (!offerLink) return;
+    var card = offerLink.closest(".offer-card");
+    var offerId = card && card.getAttribute("data-offer-id");
+    if (offerId && window.RumboCloud && window.RumboCloud.isConfigured) {
+      window.RumboCloud.recordView(offerId).catch(function (error) { console.error("No se pudo registrar la visita:", error); });
     }
   });
 
-  function getAccounts() {
-    var accounts = readJson(ACCOUNT_KEY, []);
-    return Array.isArray(accounts) ? accounts : [];
-  }
-
-  function bytesToHex(bytes) {
-    return Array.from(bytes).map(function (byte) { return byte.toString(16).padStart(2, "0"); }).join("");
-  }
-
-  function hexToBytes(hex) {
-    var bytes = new Uint8Array(hex.length / 2);
-    for (var index = 0; index < bytes.length; index += 1) bytes[index] = parseInt(hex.slice(index * 2, index * 2 + 2), 16);
-    return bytes;
-  }
-
-  function createSalt() {
-    var bytes = new Uint8Array(16);
-    window.crypto.getRandomValues(bytes);
-    return bytesToHex(bytes);
-  }
-
-  async function passwordHash(password, salt) {
-    if (!window.crypto || !window.crypto.subtle) throw new Error("Para crear una cuenta de prueba, abre la web publicada con https.");
-    var key = await window.crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
-    var bits = await window.crypto.subtle.deriveBits({
-      name: "PBKDF2", salt: hexToBytes(salt), iterations: HASH_ITERATIONS, hash: "SHA-256"
-    }, key, 256);
-    return bytesToHex(new Uint8Array(bits));
-  }
+  document.addEventListener("click", async function (event) {
+    var ratingButton = event.target.closest("[data-rate-offer]");
+    if (!ratingButton) return;
+    event.preventDefault();
+    if (!window.RumboCloud || !window.RumboCloud.isConfigured) return;
+    ratingButton.disabled = true;
+    try {
+      await window.RumboCloud.rateOffer(ratingButton.getAttribute("data-offer-id"), ratingButton.getAttribute("data-rate-offer"));
+    } catch (error) {
+      ratingButton.disabled = false;
+      var card = ratingButton.closest(".offer-card");
+      if (card) {
+        var message = card.querySelector(".rating-status");
+        if (!message) { message = document.createElement("span"); message.className = "rating-status"; card.querySelector(".offer-rating").appendChild(message); }
+        message.textContent = error.message || "No se pudo guardar tu valoración.";
+      }
+    }
+  });
 
   function goToPortal(account) {
     try {
-      var profileSession = JSON.stringify({ name: account.name, email: account.email, role: account.role, company: account.company || null });
+      var profileSession = JSON.stringify(account);
       sessionStorage.setItem("rumboDemoProfile", profileSession);
       localStorage.setItem("rumboDemoProfile", profileSession);
     } catch (error) { /* La demo no depende de la sesión. */ }
     var requestedPage = new URLSearchParams(window.location.search).get("next") || "";
+    if (!requestedPage) {
+      try { requestedPage = localStorage.getItem("rumboPendingDestination") || ""; } catch (error) { requestedPage = ""; }
+    }
     var safePage = requestedPage.split(/[?#]/)[0];
     var isSafePage = /^[a-z0-9-]+\.html$/i.test(safePage) && protectedPageRoles[safePage] === account.role;
+    if (isSafePage) {
+      try { localStorage.removeItem("rumboPendingDestination"); } catch (error) { /* El acceso no depende de la redirección guardada. */ }
+    }
     window.location.href = isSafePage ? safePage : (account.role === "empresa" ? "empresas.html" : "index.html");
   }
 
@@ -485,6 +556,8 @@
     var signup = form.dataset.mode === "signup";
     var roleInput = form.querySelector('input[name="role"]:checked');
     var isCompanySignup = signup && roleInput && roleInput.value === "empresa";
+    var roleSelect = document.getElementById("role-select");
+    if (roleSelect) roleSelect.hidden = !signup || !!form.dataset.requiredRole;
     companyFields.hidden = !isCompanySignup;
     companyFields.querySelectorAll("[data-company-required]").forEach(function (field) {
       field.required = isCompanySignup;
@@ -497,9 +570,7 @@
     if (emailInput) emailInput.placeholder = isCompanySignup ? "Correo de contacto de la empresa" : "Correo electrónico";
   }
 
-  document.querySelectorAll("[data-auth-mode]").forEach(function (button) {
-    button.addEventListener("click", function () {
-      var mode = button.dataset.authMode;
+  function setAuthMode(mode) {
       var signup = mode === "signup";
       var form = document.getElementById("auth-form");
       var nameField = document.getElementById("name-field");
@@ -514,14 +585,17 @@
       confirmField.hidden = !signup;
       confirmInput.required = signup;
       document.getElementById("auth-heading").textContent = signup ? "Crea tu cuenta" : "Inicia sesión";
-      document.getElementById("auth-subtitle").textContent = signup ? "Elige tu perfil y completa tus datos para entrar." : "Escribe el correo y la contraseña que registraste en este navegador.";
-      document.getElementById("auth-switch-text").textContent = signup ? "¿Ya tienes cuenta?" : "¿Todavía no tienes cuenta?";
+      document.getElementById("auth-subtitle").textContent = signup ? "Elige tu tipo de cuenta y completa tus datos." : "Accede a tu espacio personal de empleo o empresa.";
+      document.getElementById("auth-switch-text").textContent = signup ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?";
       submit.innerHTML = signup ? 'Crear cuenta y continuar <span aria-hidden="true">→</span>' : 'Iniciar sesión <span aria-hidden="true">→</span>';
       document.getElementById("password").autocomplete = signup ? "new-password" : "current-password";
       document.getElementById("auth-status").textContent = "";
       document.querySelectorAll("[data-auth-mode]").forEach(function (item) { item.hidden = item.dataset.authMode === mode; });
       updateAuthRegistrationFields();
-    });
+  }
+
+  document.querySelectorAll("[data-auth-mode]").forEach(function (button) {
+    button.addEventListener("click", function () { setAuthMode(button.dataset.authMode); });
   });
 
   var authForm = document.getElementById("auth-form");
@@ -534,6 +608,7 @@
     }
     var requiredRole = accessParams.get("role");
     if (requiredRole !== "candidato" && requiredRole !== "empresa") requiredRole = "";
+    authForm.dataset.requiredRole = requiredRole;
     if (requiredRole) {
       var requestedRoleInput = authForm.querySelector('input[name="role"][value="' + requiredRole + '"]');
       if (requestedRoleInput) requestedRoleInput.checked = true;
@@ -541,8 +616,24 @@
     authForm.querySelectorAll('input[name="role"]').forEach(function (input) {
       input.addEventListener("change", updateAuthRegistrationFields);
     });
-    updateAuthRegistrationFields();
+    if (accessParams.get("mode") === "signup") setAuthMode("signup");
+    else setAuthMode(authForm.dataset.mode || "login");
+    var cloudNotice = document.getElementById("auth-connection-notice");
+    var authFootnote = document.getElementById("auth-footnote");
+    if (!window.RumboCloud || !window.RumboCloud.isConfigured) {
+      if (cloudNotice) {
+        cloudNotice.hidden = false;
+        cloudNotice.innerHTML = '<strong>Cuenta segura en configuración.</strong> Para activar el registro y guardar tus datos entre dispositivos, falta conectar la base de datos de Rumbo. Sigue los pasos de <a href="LEEME.md">la guía de configuración</a>.';
+      }
+      if (authFootnote) authFootnote.textContent = "Tus contraseñas no se guardan en este navegador. El acceso se activará al conectar el servidor de cuentas.";
+    } else if (authFootnote) authFootnote.textContent = "Tu sesión y perfil quedarán asociados a tu cuenta Rumbo.";
     var requestedNext = accessParams.get("next");
+    if (requestedNext) {
+      var pendingPage = requestedNext.split(/[?#]/)[0].split("/").pop().toLowerCase();
+      if (/^[a-z0-9-]+\.html$/i.test(pendingPage) && protectedPageRoles[pendingPage] === requiredRole) {
+        try { localStorage.setItem("rumboPendingDestination", pendingPage); } catch (error) { /* El destino permanece en la URL durante el acceso. */ }
+      }
+    }
     var destinationNames = {
       "encuesta.html": "la encuesta",
       "paquetes.html": "los paquetes para personas candidatas",
@@ -553,7 +644,8 @@
       "candidatos.html": "el área de empleo",
       "empresas.html": "el portal de empresas",
       "paquetes-empresas.html": "los paquetes para empresas",
-      "publicar-oferta.html": "la publicación de ofertas"
+      "publicar-oferta.html": "la publicación de ofertas",
+      "candidatos-empresa.html": "el panel de candidaturas de empresa"
     };
     var nextName = requestedNext ? requestedNext.split(/[?#]/)[0].split("/").pop() : "";
     var accessContext = document.getElementById("auth-context");
@@ -562,26 +654,48 @@
       accessContext.textContent = "Inicia sesión o crea una cuenta para acceder a " + destinationNames[nextName] + ".";
     }
 
+    var sessionNotice = document.getElementById("auth-session-notice");
+    var sessionMessage = document.getElementById("auth-session-message");
+    var switchAccountButton = document.getElementById("auth-switch-account");
+    if (requiredRole && window.RumboCloud && window.RumboCloud.isConfigured) {
+      window.RumboCloud.ready.then(function () {
+        var activeProfile = window.RumboCloud.getCurrentProfile();
+        if (activeProfile && activeProfile.role !== requiredRole && sessionNotice) {
+          sessionNotice.hidden = false;
+          if (sessionMessage) sessionMessage.textContent = "Ya hay una sesión de " + (activeProfile.role === "empresa" ? "empresa" : "persona candidata") + " abierta. Cierra esa sesión para entrar en esta sección con el otro tipo de cuenta.";
+        }
+      });
+    }
+    if (switchAccountButton) switchAccountButton.addEventListener("click", async function () {
+      switchAccountButton.disabled = true;
+      try {
+        await window.RumboCloud.signOut(false);
+        window.location.reload();
+      } catch (error) {
+        switchAccountButton.disabled = false;
+        if (sessionMessage) sessionMessage.textContent = error.message || "No se pudo cerrar la sesión actual.";
+      }
+    });
+
     authForm.addEventListener("submit", async function (event) {
       event.preventDefault();
       var status = document.getElementById("auth-status");
       var submit = document.getElementById("auth-submit");
       var email = document.getElementById("email").value.trim().toLowerCase();
       var password = document.getElementById("password").value;
-      var role = authForm.querySelector('input[name="role"]:checked').value;
+      var roleChoice = authForm.querySelector('input[name="role"]:checked');
+      var role = roleChoice ? roleChoice.value : "";
       var signup = authForm.dataset.mode === "signup";
       submit.disabled = true;
-      status.textContent = signup ? "Creando tu cuenta de demostración…" : "Comprobando tus datos…";
+      status.textContent = signup ? "Creando tu cuenta Rumbo…" : "Iniciando sesión…";
       try {
-        var accounts = getAccounts();
+        if (!window.RumboCloud || !window.RumboCloud.isConfigured) throw new Error("El acceso seguro todavía no está activo. Sigue la guía de configuración para conectar la base de datos de Rumbo.");
         var account;
         if (signup) {
           var name = document.getElementById("name").value.trim();
           var confirmation = document.getElementById("confirm-password").value;
           if (requiredRole && role !== requiredRole) throw new Error("Para abrir esta sección, selecciona el perfil indicado.");
           if (password !== confirmation) throw new Error("Las contraseñas no coinciden. Comprueba las dos casillas.");
-          if (accounts.some(function (item) { return item.email === email && item.role === role; })) throw new Error("Ya existe una cuenta de este tipo con ese correo en este navegador. Inicia sesión con ese perfil.");
-          var salt = createSalt();
           var companyDetails = null;
           if (role === "empresa") {
             companyDetails = {
@@ -592,27 +706,37 @@
               address: document.getElementById("company-address").value.trim(),
               phone: document.getElementById("company-phone").value.trim(),
               website: document.getElementById("company-website").value.trim(),
-              contactEmail: email
+              contactEmail: email,
+              vacancyCount: Math.max(0, Math.floor(Number(document.getElementById("company-vacancies").value || 0)))
             };
           }
-          account = { name: name, email: email, role: role, company: companyDetails, salt: salt, passwordHash: await passwordHash(password, salt) };
-          accounts.push(account);
-          localStorage.setItem(ACCOUNT_KEY, JSON.stringify(accounts));
+          var created = await window.RumboCloud.signUp(email, password, {
+            name: name,
+            role: role,
+            companyName: companyDetails && companyDetails.companyName,
+            taxId: companyDetails && companyDetails.taxId,
+            country: companyDetails && companyDetails.country,
+            legalForm: companyDetails && companyDetails.legalForm,
+            address: companyDetails && companyDetails.address,
+            companyPhone: companyDetails && companyDetails.phone,
+            website: companyDetails && companyDetails.website,
+            vacancyCount: companyDetails && companyDetails.vacancyCount,
+            redirectTo: (function () {
+              var redirect = new URL("index.html", window.location.href);
+              var destination = requestedNext ? requestedNext.split(/[?#]/)[0].split("/").pop().toLowerCase() : "";
+              if (/^[a-z0-9-]+\.html$/i.test(destination) && protectedPageRoles[destination] === role) redirect.searchParams.set("resume", destination);
+              return redirect.href;
+            }())
+          });
+          if (!created.session) {
+            status.textContent = "Hemos enviado un enlace de confirmación a tu correo. Confírmalo y después inicia sesión para entrar.";
+            submit.disabled = false;
+            return;
+          }
+          account = created.profile;
           status.textContent = "Cuenta creada. Entrando en Rumbo…";
         } else {
-          if (requiredRole && role !== requiredRole) throw new Error("Esta sección requiere el perfil de " + (requiredRole === "empresa" ? "empresa" : "persona candidata") + ". Selecciona la opción correcta.");
-          account = accounts.find(function (item) { return item.email === email && item.role === role; });
-          if (!account) {
-            var otherRoleAccount = accounts.find(function (item) { return item.email === email; });
-            if (otherRoleAccount) {
-              var registeredRole = otherRoleAccount.role === "empresa" ? "empresa" : "persona candidata";
-              var selectedRole = role === "empresa" ? "empresa" : "persona candidata";
-              throw new Error("Ese correo tiene una cuenta de " + registeredRole + ". Para entrar como " + selectedRole + ", pulsa «Crear cuenta» y completa ese perfil; puedes usar el mismo correo.");
-            }
-            throw new Error("No encuentro una cuenta de " + (role === "empresa" ? "empresa" : "persona candidata") + " con ese correo en este navegador. Pulsa «Crear cuenta» para registrarla.");
-          }
-          var enteredHash = await passwordHash(password, account.salt);
-          if (enteredHash !== account.passwordHash) throw new Error("La contraseña no coincide. Vuelve a intentarlo.");
+          account = await window.RumboCloud.signIn(email, password, requiredRole);
           status.textContent = "Sesión iniciada. Entrando en Rumbo…";
         }
         document.getElementById("password").value = "";
@@ -620,7 +744,7 @@
         if (confirmPassword) confirmPassword.value = "";
         window.setTimeout(function () { goToPortal(account); }, 450);
       } catch (error) {
-        status.textContent = error.message || "No se pudo crear la cuenta en este navegador.";
+        status.textContent = error.message || "No se pudo completar el acceso. Comprueba tus datos e inténtalo de nuevo.";
         submit.disabled = false;
       }
     });
@@ -652,22 +776,21 @@
           (duration === "cualquiera" || offer.durations.indexOf(duration) !== -1);
       }
 
-      var exactOffers = offers.filter(matches);
-      var selectedOffers = exactOffers;
+      var scores = offers.map(function (offer) {
+        var score = 0;
+        if (country !== "cualquiera" && offer.country === country) score += 1;
+        if (sector !== "cualquiera" && offer.sector === sector) score += 1;
+        if (duration !== "cualquiera" && offer.durations.indexOf(duration) !== -1) score += 1;
+        var rating = Number(offer.averageRating || 0);
+        var favorites = Number(offer.favoritesCount || 0);
+        var views = Number(offer.viewsCount || 0);
+        var recommendationScore = score * 1000 + rating * 10 + Math.log(favorites + 1) * 5 + Math.log(views + 1) * 2;
+        return { offer: offer, score: score, recommendationScore: recommendationScore };
+      }).filter(function (item) { return item.score > 0 || activeFilters.length === 0; })
+        .sort(function (a, b) { return b.recommendationScore - a.recommendationScore; });
+      var exactOffers = scores.filter(function (item) { return matches(item.offer); }).map(function (item) { return item.offer; });
       var exactMatch = exactOffers.length > 0;
-      var scores = [];
-      if (!exactMatch) {
-        scores = offers.map(function (offer) {
-          var score = 0;
-          if (country !== "cualquiera" && offer.country === country) score += 1;
-          if (sector !== "cualquiera" && offer.sector === sector) score += 1;
-          if (duration !== "cualquiera" && offer.durations.indexOf(duration) !== -1) score += 1;
-          return { offer: offer, score: score };
-        }).filter(function (item) { return item.score > 0; })
-          .sort(function (a, b) { return b.score - a.score; })
-          .slice(0, 3);
-        selectedOffers = scores.map(function (item) { return item.offer; });
-      }
+      var selectedOffers = exactMatch ? exactOffers.slice(0, 5) : scores.slice(0, 3).map(function (item) { return item.offer; });
 
       var age = data.get("age");
       var countryLabel = country === "cualquiera" ? "cualquier país europeo" : country;
@@ -680,7 +803,7 @@
         : (selectedOffers.length ? "Las ofertas más cercanas a tus preferencias" : "Aún no hay una oferta que encaje en esta selección");
       document.getElementById("survey-summary").textContent = "Buscas " + sectorLabel + " en " + countryLabel + " durante " + durationLabel +
         ". Perfil de edad: " + age + ". Te motiva: " + motivationText + "." +
-        (exactMatch ? " Estas vacantes coinciden en país, sector y duración." :
+        (exactMatch ? " Estas vacantes coinciden en país, sector y duración. Dentro de las coincidencias, priorizamos las mejor valoradas por las personas usuarias." :
           (selectedOffers.length ? " No hay coincidencia exacta en esta selección; estas ofertas comparten parte de tus criterios." : " Prueba otros filtros o consulta más vacantes en EURES."));
 
       var list = document.getElementById("recommendation-list");
@@ -688,14 +811,15 @@
         list.innerHTML = selectedOffers.map(function (offer) {
           var badge = "Coincide con tus filtros";
           if (!exactMatch) {
-            var item = scores.find(function (scoreItem) { return scoreItem.offer === offer; });
+            var item = scores.find(function (scoreItem) { return scoreItem.offer.id === offer.id && scoreItem.offer.title === offer.title; });
             badge = "Coincide en " + item.score + " de " + activeFilters.length + " preferencias";
           }
           return offerCardHtml(offer, badge);
         }).join("");
       } else {
-        list.innerHTML = '<div class="notice">No tenemos una vacante de muestra con esos filtros. Puedes consultar más anuncios en <a class="text-link" href="https://eures.europa.eu/index_es" target="_blank" rel="noopener noreferrer">EURES ↗</a>.</div>';
+        list.innerHTML = '<div class="notice">No encontramos ofertas con esos filtros. Prueba con otro país o sector, o consulta <a class="text-link" href="https://eures.europa.eu/index_es" target="_blank" rel="noopener noreferrer">EURES ↗</a>.</div>';
       }
+      registerOfferViewTracking(list);
 
       var needsHousing = data.get("accommodation") === "si";
       var needsTransport = data.get("transport") === "si";
@@ -714,7 +838,7 @@
 
   var offerForm = document.getElementById("offer-form");
   if (offerForm) {
-    offerForm.addEventListener("submit", function (event) {
+    offerForm.addEventListener("submit", async function (event) {
       event.preventDefault();
       var data = new FormData(offerForm);
       var company = String(data.get("company") || "").trim();
@@ -724,6 +848,8 @@
       var location = String(data.get("location") || "").trim();
       var sector = sectorDetails(data.get("sector"));
       var duration = durationDetails(data.get("duration"), offerForm.querySelector('[name="duration"]').selectedOptions[0].textContent);
+      var vacancies = Math.max(1, Math.floor(Number(data.get("vacancies") || 1)));
+      var activeCompany = currentProfile();
       var packageLabel = data.get("package") === "selection" ? "Apoyo de selección · 149 €" : "Publicación estándar · 49 €";
       var packagePrice = data.get("package") === "selection" ? 149 : 49;
       var sponsored = data.get("sponsor") === "si";
@@ -732,49 +858,41 @@
       var salary = String(data.get("salary") || "Salario no indicado").trim();
       var language = String(data.get("language") || "").trim();
       var description = String(data.get("description") || "").trim();
-      var offer = {
-        id: createId(),
-        isDemo: true,
-        sponsored: sponsored,
-        packageLabel: packageLabel,
-        company: company,
-        title: title,
-        country: country,
-        location: location || "Ubicación no indicada",
-        sector: sector.key,
-        sectorLabel: sector.label,
-        durations: duration.values,
-        durationLabel: duration.label,
-        salary: salary,
-        housing: housing,
-        deadline: "Anuncio de demostración enviado desde este navegador; no verificado por Rumbo.",
-        details: description + (language ? " Idiomas: " + language + "." : ""),
-        contactEmail: contact,
-        url: "mailto:" + encodeURIComponent(contact).replace(/%40/gi, "@"),
-        source: "Contacto directo",
-        createdAt: Date.now()
-      };
-
       var status = document.getElementById("offer-save-status");
       var previewText = document.getElementById("offer-preview-text");
       try {
-        var offers = getDemoOffers();
-        offers.unshift(offer);
-        localStorage.setItem(DEMO_OFFERS_KEY, JSON.stringify(offers));
-        if (previewText) previewText.textContent = "Oferta guardada en esta demostración.\nPuesto: " + title + "\nEmpresa: " + company +
+        if (!window.RumboCloud || !window.RumboCloud.isConfigured) throw new Error("La publicación online todavía no está conectada. Sigue la guía de configuración de Rumbo.");
+        if (!activeCompany || activeCompany.role !== "empresa") throw new Error("Inicia sesión con una cuenta de empresa para publicar la oferta.");
+        await window.RumboCloud.createOffer({
+          company: company,
+          title: title,
+          country: country,
+          location: location,
+          sectorKey: sector.key,
+          sectorLabel: sector.label,
+          contractType: duration.values[0],
+          durationLabel: duration.label,
+          vacancies: vacancies,
+          salary: salary,
+          housing: housing,
+          details: description + (language ? " Idiomas: " + language + "." : ""),
+          applicationEmail: contact,
+          promotionRequested: sponsored
+        });
+        if (previewText) previewText.textContent = "Oferta publicada en Rumbo.\nPuesto: " + title + "\nEmpresa: " + company +
           "\nPaís: " + country + "\nSector: " + sector.label + "\nContrato: " + duration.label +
           "\nAlojamiento: " + housing + "\nSalario: " + salary + "\nServicio: " + packageLabel +
-          "\nPromoción: " + (offer.sponsored ? "Sí, se verá como patrocinada" : "No") +
-          "\nTotal orientativo: " + estimatedPrice + " € (sin cobro)" +
+          "\nPromoción: " + (sponsored ? "Solicitada; pendiente de contratación y confirmación" : "No solicitada") +
+          "\nTotal orientativo: " + estimatedPrice + " €" +
           "\n\n" + description;
-        if (status) status.innerHTML = 'Ya aparece en las ofertas y en el mapa de este navegador. <a href="recomendadas.html#mapa">Ver la oferta →</a>' +
-          (offer.sponsored ? ' <span class="pill gold">Patrocinada en esta demo</span>' : '');
+        if (status) status.innerHTML = 'Oferta publicada y visible en Rumbo. <a href="recomendadas.html#mapa">Ver oferta →</a>' +
+          (sponsored ? ' <span class="pill gold">Promoción solicitada · pendiente de confirmación</span>' : '');
         document.getElementById("offer-preview").classList.add("visible");
         offerForm.reset();
         renderCollections("cualquiera");
         document.getElementById("offer-preview").scrollIntoView({ behavior: "smooth", block: "nearest" });
       } catch (error) {
-        if (status) status.textContent = "No se pudo guardar. Comprueba que el navegador permita guardar datos de esta página.";
+        if (status) status.textContent = error.message || "No se pudo publicar la oferta. Inténtalo de nuevo.";
         document.getElementById("offer-preview").classList.add("visible");
       }
     });

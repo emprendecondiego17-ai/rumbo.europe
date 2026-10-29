@@ -1,32 +1,57 @@
-# Rumbo — prototipo académico
+# Rumbo
 
-## Páginas del sitio
-- `index.html`: portada pública de Rumbo.
-- `acceso.html`: registro e inicio de sesión de demostración, con selección de perfil.
-- `candidatos.html`: espacio de inicio para personas candidatas una vez dentro.
-- `perfil.html`: edición del perfil personal y acceso a las otras secciones de la cuenta.
-- `curriculum.html`: subida local de un CV o creación de uno imprimible/guardable como PDF.
-- `guardadas.html`: lista personal de ofertas que se hayan marcado como guardadas.
-- `encuesta.html`: compara las preferencias con las ofertas incluidas y muestra empresas coincidentes o cercanas.
-- `paquetes.html`: servicios y precios provisionales para personas candidatas.
-- `recomendadas.html`: mapa con formas reales de los países, espacio patrocinado y ofertas enlazadas a sus fuentes.
-- `empresas.html`: portada del portal de empresas.
-- `paquetes-empresas.html`: propuesta provisional de precios para empresas.
-- `publicar-oferta.html`: formulario para preparar y guardar una oferta de demostración.
-- `styles.css`, `script.js`, `perfil.js` y `europe-map-data.js`: diseño, funciones compartidas, cuenta personal y fronteras del mapa.
+Rumbo conecta a personas que buscan empleo en Europa con ofertas de empresas. La portada es pública; cada cuenta tiene un perfil persistente de persona candidata o empresa. El icono del perfil abre el área de esa cuenta y no permite cambiar el tipo de perfil.
 
-## Cómo probar el recorrido
-1. Abre `index.html`: es la portada pública.
-2. Pulsa **Encuesta**, **Paquetes** o **Empresas recomendadas**. Rumbo te llevará a `acceso.html` para registrarte o iniciar sesión.
-3. Al crear una cuenta de persona candidata, volverás a la sección que habías elegido. Las rutas también comprueban la sesión si se abren directamente.
-4. Tras entrar con una cuenta de persona candidata, el botón de acceso se convierte en un icono de perfil. Desde ahí puedes editar los datos, preparar el CV y consultar las ofertas guardadas.
-5. Para probar el portal de empresas, entra en **Acceder / crear cuenta**, selecciona **Soy empresa** y completa nombre de contacto, nombre legal, CIF/NIF o NIF-IVA, país, domicilio y teléfono. Después guarda una oferta desde **Publicar una oferta**. Si ya tienes una cuenta de persona candidata con ese correo, puedes crear además un perfil de empresa con el mismo correo, seleccionando **Soy empresa**.
+## Activar cuentas, ofertas y actualizaciones en directo
 
-## Subida a GitHub Pages
-Sube todos los archivos de la web al nivel principal del repositorio, conservando los nombres. `index.html` debe quedar en la raíz para que GitHub Pages lo abra al visitar el sitio. Tras cada cambio, vuelve a subir los archivos modificados y espera a que Pages termine de publicarlos.
+La web necesita un proyecto gratuito de Supabase para guardar cuentas y compartir datos entre usuarios. La integración ya está preparada en estos archivos; mientras la conexión siga vacía, el acceso y la publicación online mostrarán que falta configurarla.
 
-## Límites de la maqueta
-La portada es pública; las secciones de candidato y empresa requieren una sesión. El registro, la sesión, el perfil, el CV y las ofertas guardadas funcionan como demostración en el almacenamiento local de un solo navegador. Los archivos del CV no se envían ni comparten; el CV subido está limitado a 1,5 MB. Los anuncios de empresa no se comparten con otros visitantes y no hay pagos reales. Google y Apple todavía requieren configuración. Para un servicio público hace falta un servidor con cuentas, almacenamiento protegido de CV, moderación de anuncios y una base de datos. El recomendador compara una selección de ofertas; no consulta EURES en directo. Confirma la vigencia y condiciones de cada oferta en su fuente original. Las tarifas empresariales son propuestas académicas pendientes de validación.
+1. Entra en [supabase.com](https://supabase.com), inicia sesión y crea un proyecto. Guarda la contraseña de la base de datos en un lugar privado.
+2. En el proyecto, abre **SQL Editor → New query**. Copia todo el contenido de `supabase-schema.sql`, pégalo y pulsa **Run**. Esto crea las tablas, los permisos de privacidad, el espacio privado para CV y las suscripciones de actualizaciones.
+3. En **Project Settings → API Keys**, copia el **Project URL** y la **Publishable key** (en proyectos antiguos puede llamarse `anon` key). En `supabase-config.js`, pega esos dos valores en `url` y `publishableKey`.
+4. En Supabase, abre **Authentication → URL Configuration**. Configura `https://emprendecondiego17-ai.github.io/rumbo.europe/` como **Site URL**. En **Redirect URLs**, añade `https://emprendecondiego17-ai.github.io/rumbo.europe/**` y, si pruebas con VS Code Live Server, `http://127.0.0.1:5500/**`. Supabase usa la lista de destinos permitidos para los enlaces de confirmación; consulta su [guía oficial de redirecciones](https://supabase.com/docs/guides/auth/redirect-urls) si tu dominio de GitHub Pages es distinto.
+5. Sube todos los archivos de esta carpeta al nivel principal del repositorio, incluido `supabase-config.js`, y espera a que GitHub Pages publique los cambios. Abre la web con `https://...`; las cuentas requieren conexión segura y no funcionan desde `file:///`.
+6. Crea una cuenta de prueba de cada tipo con correos distintos. Si Supabase pide confirmar el correo, abre el enlace recibido y después inicia sesión.
+
+**Clave importante:** en la web solo se pega la URL y la Publishable/anon key. Nunca copies una clave `secret` o `service_role` aquí: esa clave daría acceso administrativo a la base de datos.
+
+## Qué hace cada cuenta
+
+### Persona candidata
+
+- La portada se puede visitar sin cuenta. Al abrir Encuesta, Paquetes o Empresas recomendadas se pide iniciar sesión y, tras entrar, se abre la página elegida.
+- El formulario de acceso inicia sesión en una cuenta existente. Para crear una, pulsa **Crear cuenta** y selecciona el tipo de perfil; ese tipo no se puede cambiar desde el icono.
+- El perfil y el CV se guardan en la cuenta. El archivo del CV queda privado y solo se permite a una empresa verlo después de pasar a selección o de ser marcada como contratada.
+- Las ofertas publicadas dentro de Rumbo se pueden guardar y valorar. La empresa recibe en directo favoritos, visitas, valoraciones y cambios en el proceso de selección.
+
+### Empresa
+
+- Al registrarse, completa nombre legal o comercial, CIF/NIF, país, domicilio, teléfono y los demás datos que correspondan. El perfil de empresa se asocia al correo de acceso.
+- Publica ofertas desde **Publicar una oferta** e indica el número de vacantes. El nombre de empresa y el correo de contacto se toman del perfil de la cuenta.
+- El icono de perfil abre el panel de candidaturas, en una página independiente. Allí hay pestañas para personas que guardaron ofertas, visitas, selección y contrataciones. Se muestra nombre, ciudad, sector, destino y breve descripción; el correo y el teléfono no se muestran.
+- Los cambios de favoritos, visitas y candidaturas se actualizan en las otras sesiones conectadas. Una visita se cuenta cuando la tarjeta de una oferta aparece en pantalla o al abrir su enlace, una vez por persona y sesión para evitar inflar el contador.
+- Las empresas pueden valorar las ofertas publicadas en Rumbo. La encuesta conserva primero las coincidencias por país, sector y duración y, dentro de ellas, ordena mejor las valoradas y con mayor interés.
+
+## Promoción y precios
+
+Los importes mostrados son orientativos. La web no cobra todavía. Una empresa puede solicitar promoción, pero su oferta no aparecerá como patrocinada hasta que la contratación y el pago se confirmen. La activación de pagos requerirá conectar un proveedor de pagos y definir quién valida las promociones.
+
+## Páginas principales
+
+- `index.html`: portada pública y espacio para empresas patrocinadoras.
+- `acceso.html`: iniciar sesión o crear una cuenta.
+- `encuesta.html`: buscar ofertas que coincidan con las preferencias.
+- `paquetes.html` y `paquetes-empresas.html`: servicios y desglose de precios.
+- `recomendadas.html`: mapa interactivo, ofertas externas y ofertas de Rumbo.
+- `perfil.html`, `curriculum.html` y `guardadas.html`: perfil personal, CV y ofertas guardadas.
+- `empresas.html`: perfil y actividad de la empresa.
+- `candidatos-empresa.html`: favoritos, visitas, selección y contrataciones.
+- `publicar-oferta.html`: formulario de publicación de vacantes.
+
+## Límites actuales
+
+El inicio de sesión es por correo y contraseña; Google y Apple todavía no están conectados. Los pagos tampoco están habilitados. Las ofertas externas enlazan a sus fuentes originales, así que su disponibilidad puede cambiar; solo las ofertas creadas por empresas en Rumbo generan métricas y valoraciones dentro de Rumbo. Antes de usar la web con público real, añade moderación de anuncios, política de privacidad y condiciones del servicio.
 
 ## Mapa
+
 Las formas de los países proceden del conjunto Admin 0 de Natural Earth a escala 1:50m, recortado al área europea. Natural Earth permite el uso libre de sus datos; consulta su [página de descarga y condiciones](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries/). Algunos microestados se señalan con un punto auxiliar para facilitar su selección.

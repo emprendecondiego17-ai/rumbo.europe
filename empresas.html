@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rumbo — Portal para empresas</title><link rel="stylesheet" href="styles.css?v=11"><script src="script.js?v=11" defer></script><script src="perfil.js?v=2" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rumbo — Portal para empresas</title><link rel="stylesheet" href="styles.css?v=13"><script src="supabase-config.js?v=1" defer></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script><script src="cloud.js?v=1" defer></script><script src="script.js?v=13" defer></script><script src="perfil.js?v=4" defer></script></head>
 <body>
-  <header class="site-header"><div class="wrap topbar"><a class="brand" href="empresas.html"><span class="brand-mark">✦</span><span>rumbo</span></a><button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="company-nav">☰</button><nav class="main-nav" id="company-nav" aria-label="Navegación para empresas"><a href="empresas.html" aria-current="page">Inicio</a><a href="paquetes-empresas.html">Paquetes</a><a href="publicar-oferta.html" class="nav-cta">Publicar una oferta →</a><a class="nav-cta" data-account-control href="acceso.html?access=1">Acceder / crear cuenta</a></nav></div></header>
+  <header class="site-header"><div class="wrap topbar"><a class="brand" href="empresas.html"><span class="brand-mark">✦</span><span>rumbo</span></a><button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="company-nav">☰</button><nav class="main-nav" id="company-nav" aria-label="Navegación para empresas"><a href="empresas.html" aria-current="page">Inicio</a><a href="candidatos-empresa.html">Candidatos</a><a href="paquetes-empresas.html">Paquetes</a><a href="publicar-oferta.html" class="nav-cta">Publicar una oferta →</a><a class="nav-cta" data-account-control href="acceso.html?access=1">Acceder / crear cuenta</a><button class="logout-nav-link" type="button" data-logout>Cerrar sesión</button></nav></div></header>
   <main class="page-main">
     <section class="wrap company-hero">
       <span class="eyebrow">Portal de empresas</span>
@@ -11,9 +11,9 @@
       <div class="hero-actions"><a class="button" href="publicar-oferta.html">Preparar una oferta <span>→</span></a><a class="button secondary" href="paquetes-empresas.html">Consultar paquetes</a></div>
     </section>
     <section class="wrap company-profile-panel" id="company-profile-panel" hidden>
-      <div class="section-heading"><div><span class="eyebrow">Cuenta de empresa</span><h2>Datos de tu empresa</h2></div><p>Completa la información legal y de contacto para que quede asociada a tu cuenta de demostración.</p></div>
+      <div class="section-heading"><div><span class="eyebrow">Cuenta de empresa</span><h2>Datos de tu empresa</h2></div><p>La información legal y de contacto queda asociada a tu cuenta privada.</p></div>
       <div class="surface company-profile-summary" id="company-profile-summary" hidden>
-        <div><span class="pill">Perfil de empresa</span><h3 id="company-summary-name"></h3><p id="company-summary-tax"></p><p id="company-summary-address"></p><p id="company-summary-contact"></p></div>
+        <div><span class="pill">Perfil de empresa</span><h3 id="company-summary-name"></h3><p id="company-summary-tax"></p><p id="company-summary-address"></p><p id="company-summary-contact"></p><p id="company-summary-vacancies"></p></div>
         <button class="button secondary" id="company-profile-edit" type="button">Editar datos</button>
       </div>
       <form class="surface form-card" id="company-profile-form" hidden>
@@ -21,6 +21,7 @@
           <div class="form-field"><label for="company-name">Nombre legal o comercial</label><input id="company-name" name="companyName" required maxlength="120"></div>
           <div class="form-field"><label for="company-tax-id">CIF / NIF / NIF-IVA</label><input id="company-tax-id" name="taxId" required minlength="7" maxlength="24"></div>
           <div class="form-field"><label for="company-country">País de registro</label><select id="company-country" name="country" required><option value="">Selecciona un país</option><option>España</option><option>Alemania</option><option>Austria</option><option>Bélgica</option><option>Dinamarca</option><option>Francia</option><option>Irlanda</option><option>Italia</option><option>Malta</option><option>Noruega</option><option>Países Bajos</option><option>Portugal</option><option>Suecia</option><option>Otro país europeo</option></select></div>
+          <div class="form-field"><label for="company-vacancies">Vacantes abiertas (opcional)</label><input id="company-vacancies" name="vacancyCount" type="number" min="0" max="9999" step="1" placeholder="0"></div>
           <div class="form-field"><label for="company-legal-form">Forma jurídica (opcional)</label><input id="company-legal-form" name="legalForm" maxlength="80" placeholder="S. L., GmbH, autónomo…"></div>
           <div class="form-field full"><label for="company-address">Domicilio social</label><input id="company-address" name="address" required maxlength="180"></div>
           <div class="form-field"><label for="company-phone">Teléfono de contacto</label><input id="company-phone" name="phone" type="tel" required maxlength="40"></div>
@@ -30,21 +31,35 @@
         <p class="status-message" id="company-profile-status" role="status" aria-live="polite"></p>
       </form>
     </section>
+    <section class="wrap section company-activity-overview" id="company-activity-overview" hidden>
+      <div class="section-heading"><div><span class="eyebrow">Actividad de tus ofertas</span><h2>Personas interesadas</h2></div><p>Los favoritos, las visitas y los cambios de candidatura se actualizan mientras las personas usan Rumbo.</p></div>
+      <div class="company-metrics-grid">
+        <article class="surface company-metric"><span>Vacantes publicadas</span><strong id="company-metric-vacancies">0</strong></article>
+        <article class="surface company-metric"><span>Vacantes declaradas por la empresa</span><strong id="company-metric-declared">0</strong></article>
+        <article class="surface company-metric"><span>Ofertas activas</span><strong id="company-metric-offers">0</strong></article>
+        <article class="surface company-metric"><span>Personas que guardaron ofertas</span><strong id="company-metric-favorites">0</strong></article>
+        <article class="surface company-metric"><span>Visitas a las ofertas</span><strong id="company-metric-views">0</strong></article>
+        <article class="surface company-metric"><span>En selección</span><strong id="company-metric-process">0</strong></article>
+        <article class="surface company-metric"><span>Contratadas</span><strong id="company-metric-hired">0</strong></article>
+      </div>
+      <a class="button company-candidates-link" href="candidatos-empresa.html">Gestionar personas candidatas <span aria-hidden="true">→</span></a>
+      <p class="disclaimer">La actividad se comparte entre cuentas. Solo se muestra información básica del perfil de las personas candidatas; sus datos de contacto y CV se mantienen protegidos.</p>
+    </section>
     <section class="why-strip"><div class="wrap grid-3">
       <article class="why-point"><span class="tile-icon">◎</span><div><h3>Publicación ordenada</h3><p>Describe puesto, país, sector, duración, salario y requisitos.</p></div></article>
       <article class="why-point"><span class="tile-icon">€</span><div><h3>Tarifas transparentes</h3><p>Revisa la publicación, el apoyo de selección y la promoción como extras separados.</p></div></article>
       <article class="why-point"><span class="tile-icon">☆</span><div><h3>Promoción señalizada</h3><p>Si eliges destacar la empresa, el anuncio se identificará como patrocinado.</p></div></article>
     </div></section>
-    <section class="wrap section"><div class="section-heading"><div><span class="eyebrow">Dos pasos sencillos</span><h2>De la vacante a la candidatura</h2></div><p>La web es un prototipo para explicar cómo funcionaría el servicio. No sustituye el proceso de selección ni los canales de contratación de la empresa.</p></div>
+    <section class="wrap section"><div class="section-heading"><div><span class="eyebrow">Dos pasos sencillos</span><h2>De la vacante a la candidatura</h2></div><p>Publica las condiciones del puesto y gestiona desde tu cuenta las personas interesadas y su proceso de selección.</p></div>
       <div class="steps-row">
         <article class="surface step-card"><span class="step-num">01</span><h3>Prepara tu anuncio</h3><p>Responde a las preguntas sobre el puesto y redacta una descripción clara con las condiciones y requisitos.</p></article>
         <article class="surface step-card"><span class="step-num">02</span><h3>Revisa los paquetes</h3><p>Elige publicación, apoyo de búsqueda de candidatos o promoción patrocinada. Cada servicio aparece separado.</p></article>
-        <article class="surface step-card"><span class="step-num">03</span><h3>Guarda la oferta de prueba</h3><p>El anuncio aparece en las ofertas y en el mapa de este navegador para probar cómo lo verían las personas candidatas.</p></article>
+        <article class="surface step-card"><span class="step-num">03</span><h3>Publica y recibe interés</h3><p>La oferta aparece en Rumbo y las visitas, los favoritos y el proceso de selección quedan vinculados a tu cuenta.</p></article>
       </div>
     </section>
     <section class="wrap" style="padding-bottom:60px"><div class="intro-banner surface"><span class="eyebrow">Empieza aquí</span><h2>Tu vacante, explicada con transparencia.</h2><p>Indica claramente el salario, el tipo de contrato, los idiomas, el alojamiento y la forma de presentar candidatura.</p><a class="button secondary" href="publicar-oferta.html">Ir a la encuesta y publicar <span>→</span></a></div></section>
   </main>
-  <footer class="footer"><div class="wrap footer-inner"><a class="brand" href="empresas.html"><span class="brand-mark">✦</span><span>rumbo</span></a><div class="footer-note">Tarifas provisionales. Las ofertas de prueba se guardan solo en el navegador actual; no se publican para otras personas ni se cobra ningún importe.</div></div></footer>
+  <footer class="footer"><div class="wrap footer-inner"><a class="brand" href="empresas.html"><span class="brand-mark">✦</span><span>rumbo</span></a><div class="footer-note">Tarifas orientativas. Rumbo todavía no procesa pagos online; la contratación y la promoción se confirmarán antes de prestar el servicio.</div></div></footer>
 </body>
 </html>
 

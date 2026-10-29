@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#08275c">
   <meta name="description" content="Rumbo te ayuda a preparar una experiencia laboral en Europa.">
   <title>Rumbo — Accede a Rumbo</title>
-  <link rel="stylesheet" href="styles.css?v=11">
-  <script src="script.js?v=11" defer></script>
+  <link rel="stylesheet" href="styles.css?v=13">
+  <script src="supabase-config.js?v=1" defer></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script><script src="cloud.js?v=1" defer></script><script src="script.js?v=13" defer></script>
 </head>
 <body class="login-page">
   <header class="wrap login-header">
@@ -36,17 +36,19 @@
     </section>
 
     <section class="auth-card" aria-labelledby="auth-heading">
-      <span class="eyebrow">Empieza en un minuto</span>
-      <h2 id="auth-heading">Crea tu cuenta</h2>
-      <p id="auth-subtitle">Elige tu perfil y completa tus datos para entrar.</p>
+      <span class="eyebrow">Tu cuenta Rumbo</span>
+      <h2 id="auth-heading">Inicia sesión</h2>
+      <p id="auth-subtitle">Accede a tu espacio personal de empleo o empresa.</p>
       <p id="auth-context" class="auth-context" hidden></p>
-      <form id="auth-form" data-mode="signup">
-        <div class="role-select" role="radiogroup" aria-label="Tipo de cuenta">
+      <div class="notice auth-session-notice" id="auth-session-notice" hidden><p id="auth-session-message"></p><button class="button secondary" type="button" id="auth-switch-account">Cerrar sesión y usar otra cuenta</button></div>
+      <p class="notice auth-connection-notice" id="auth-connection-notice" hidden></p>
+      <form id="auth-form" data-mode="login">
+        <div class="role-select" id="role-select" role="radiogroup" aria-label="Tipo de cuenta" hidden>
           <label class="role-option"><input type="radio" name="role" value="candidato" checked><span><strong>Busco empleo</strong>Quiero encontrar trabajo</span></label>
           <label class="role-option"><input type="radio" name="role" value="empresa"><span><strong>Soy empresa</strong>Quiero publicar una oferta</span></label>
         </div>
         <div class="auth-fields">
-          <div id="name-field"><label class="sr-only" for="name">Nombre</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Tu nombre" required></div>
+          <div id="name-field" hidden><label class="sr-only" for="name">Nombre</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Tu nombre"></div>
           <div><label class="sr-only" for="email">Correo electrónico</label><input id="email" name="email" type="email" autocomplete="email" placeholder="Correo electrónico" required></div>
           <fieldset class="company-auth-fields" id="company-fields" hidden>
             <legend>Datos de la empresa</legend>
@@ -54,29 +56,25 @@
               <div><label for="company-name">Nombre legal o comercial</label><input id="company-name" name="company-name" type="text" maxlength="120" placeholder="Ej.: Rumbo Europa, S. L." data-company-required></div>
               <div><label for="company-tax-id">CIF / NIF / NIF-IVA</label><input id="company-tax-id" name="company-tax-id" type="text" minlength="7" maxlength="24" placeholder="Ej.: B12345678" data-company-required></div>
               <div><label for="company-country">País de registro</label><select id="company-country" name="company-country" data-company-required><option value="">Selecciona un país</option><option>España</option><option>Alemania</option><option>Austria</option><option>Bélgica</option><option>Dinamarca</option><option>Francia</option><option>Irlanda</option><option>Italia</option><option>Malta</option><option>Noruega</option><option>Países Bajos</option><option>Portugal</option><option>Suecia</option><option>Otro país europeo</option></select></div>
+              <div><label for="company-vacancies">Vacantes abiertas (opcional)</label><input id="company-vacancies" name="company-vacancies" type="number" min="0" max="9999" step="1" placeholder="0"></div>
               <div><label for="company-legal-form">Forma jurídica (opcional)</label><input id="company-legal-form" name="company-legal-form" type="text" maxlength="80" placeholder="Ej.: S. L., GmbH, autónomo"></div>
               <div class="company-field-full"><label for="company-address">Domicilio social</label><input id="company-address" name="company-address" type="text" maxlength="180" autocomplete="street-address" placeholder="Calle, número, ciudad y código postal" data-company-required></div>
               <div><label for="company-phone">Teléfono de contacto</label><input id="company-phone" name="company-phone" type="tel" autocomplete="tel" maxlength="40" placeholder="+34 600 000 000" data-company-required></div>
               <div><label for="company-website">Página web (opcional)</label><input id="company-website" name="company-website" type="url" maxlength="180" placeholder="https://tuempresa.eu"></div>
             </div>
-            <p class="form-help">El correo de acceso será también el correo de contacto de la empresa. Estos datos solo se guardan en esta demostración.</p>
+            <p class="form-help">Estos datos formarán parte del perfil de empresa. El CIF/NIF y el domicilio solo los verá la propia empresa.</p>
           </fieldset>
-          <div><label class="sr-only" for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="new-password" placeholder="Crea una contraseña (mínimo 6 caracteres)" minlength="6" required></div>
-          <div id="confirm-field"><label class="sr-only" for="confirm-password">Repite la contraseña</label><input id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" placeholder="Repite la contraseña" minlength="6" required></div>
+          <div><label class="sr-only" for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Contraseña" minlength="8" required></div>
+          <div id="confirm-field" hidden><label class="sr-only" for="confirm-password">Repite la contraseña</label><input id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" placeholder="Repite la contraseña" minlength="8"></div>
         </div>
-        <button class="button" id="auth-submit" type="submit">Crear cuenta y continuar <span aria-hidden="true">→</span></button>
-        <p class="auth-switch"><span id="auth-switch-text">¿Ya tienes cuenta?</span> <button class="auth-toggle" type="button" data-auth-mode="login">Iniciar sesión</button><button class="auth-toggle" type="button" data-auth-mode="signup" hidden>Crear cuenta</button></p>
+        <button class="button" id="auth-submit" type="submit">Iniciar sesión <span aria-hidden="true">→</span></button>
+        <p class="auth-switch"><span id="auth-switch-text">¿No tienes cuenta?</span> <button class="auth-toggle" type="button" data-auth-mode="signup">Crear cuenta</button><button class="auth-toggle" type="button" data-auth-mode="login" hidden>Iniciar sesión</button></p>
         <p class="status-message" id="auth-status" role="status" aria-live="polite"></p>
       </form>
-      <div class="divider">o regístrate con</div>
-      <div class="social-row">
-        <button class="social-btn" type="button" data-social-demo="Google">G&nbsp; Google · próximamente</button>
-        <button class="social-btn" type="button" data-social-demo="Apple">●&nbsp; Apple · próximamente</button>
-      </div>
-      <p class="auth-footnote">Cuenta de demostración para este navegador. No uses una contraseña real ni la que utilizas en otros servicios. Google y Apple aún requieren configuración.</p>
+      <p class="auth-footnote" id="auth-footnote">Inicia sesión con el correo y la contraseña asociados a tu cuenta.</p>
     </section>
   </main>
-  <footer class="wrap footer"><div class="footer-inner"><span>© 2026 Rumbo · Proyecto universitario</span><span>Prototipo de demostración</span></div></footer>
+  <footer class="wrap footer"><div class="footer-inner"><span>© 2026 Rumbo</span><span>Empleo y nuevas oportunidades en Europa</span></div></footer>
 </body>
 </html>
 
