@@ -9,13 +9,16 @@
     "encuesta.html": "candidato",
     "paquetes.html": "candidato",
     "recomendadas.html": "candidato",
+    "perfil.html": "candidato",
+    "curriculum.html": "candidato",
+    "guardadas.html": "candidato",
     "empresas.html": "empresa",
     "paquetes-empresas.html": "empresa",
     "publicar-oferta.html": "empresa"
   };
 
   function currentProfile() {
-    try { return JSON.parse(sessionStorage.getItem("rumboDemoProfile") || "null"); } catch (error) { return null; }
+    try { return JSON.parse(sessionStorage.getItem("rumboDemoProfile") || localStorage.getItem("rumboDemoProfile") || "null"); } catch (error) { return null; }
   }
 
   function accessUrl(destination, role) {
@@ -195,6 +198,22 @@
 
   function offerCardHtml(offer, badge) {
     var contactLabel = offer.isDemo ? "Contactar con la empresa" : "Ver oferta en " + offer.source + " ↗";
+    var savedPayload = {
+      key: String(offer.id || offer.url || (offer.company + "-" + offer.title)),
+      company: offer.company || "",
+      title: offer.title || "",
+      country: offer.country || "",
+      location: offer.location || "",
+      sectorLabel: offer.sectorLabel || "",
+      durationLabel: offer.durationLabel || "",
+      salary: offer.salary || "Salario no indicado",
+      housing: offer.housing || "No indicado",
+      deadline: offer.deadline || "",
+      details: offer.details || "",
+      url: offer.url || "",
+      source: offer.source || "",
+      isDemo: !!offer.isDemo
+    };
     var tags = '<div class="offer-meta"><span>' + escapeHtml(offer.sectorLabel) + '</span><span>' + escapeHtml(offer.durationLabel) + '</span></div>';
     return '<article class="surface offer-card">' +
       '<div class="offer-head"><div><h3>' + escapeHtml(offer.title) + '</h3>' +
@@ -208,7 +227,8 @@
       (offer.isDemo ? '<span class="pill demo-badge">Anuncio de demostración · no verificado</span>' : '') +
       (badge ? '<span class="pill gold offer-badge">' + escapeHtml(badge) + '</span>' : '') +
       '<div class="offer-bottom"><strong>' + escapeHtml(offer.salary || "Salario no indicado") + '</strong>' +
-      '<a href="' + escapeHtml(offer.url) + '" ' + (offer.isDemo ? '' : 'target="_blank" rel="noopener noreferrer"') + '>' + escapeHtml(contactLabel) + '</a></div>' +
+      '<div class="offer-actions"><a href="' + escapeHtml(offer.url) + '" ' + (offer.isDemo ? '' : 'target="_blank" rel="noopener noreferrer"') + '>' + escapeHtml(contactLabel) + '</a>' +
+      '<button class="save-offer" type="button" data-save-offer="' + escapeHtml(savedPayload.key) + '" data-offer="' + escapeHtml(JSON.stringify(savedPayload)) + '" aria-pressed="false">☆ Guardar oferta</button></div></div>' +
       (offer.isDemo ? '<button class="remove-demo-offer" type="button" data-remove-offer="' + escapeHtml(offer.id) + '">Retirar de esta demostración</button>' : '') +
       '</article>';
   }
@@ -447,7 +467,11 @@
   }
 
   function goToPortal(account) {
-    try { sessionStorage.setItem("rumboDemoProfile", JSON.stringify({ name: account.name, email: account.email, role: account.role })); } catch (error) { /* La demo no depende de la sesión. */ }
+    try {
+      var profileSession = JSON.stringify({ name: account.name, email: account.email, role: account.role });
+      sessionStorage.setItem("rumboDemoProfile", profileSession);
+      localStorage.setItem("rumboDemoProfile", profileSession);
+    } catch (error) { /* La demo no depende de la sesión. */ }
     var requestedPage = new URLSearchParams(window.location.search).get("next") || "";
     var safePage = requestedPage.split(/[?#]/)[0];
     var isSafePage = /^[a-z0-9-]+\.html$/i.test(safePage) && protectedPageRoles[safePage] === account.role;
@@ -483,6 +507,11 @@
   var authForm = document.getElementById("auth-form");
   if (authForm) {
     var accessParams = new URLSearchParams(window.location.search);
+    var initialRole = accessParams.get("role");
+    var initialDestination = accessParams.get("next");
+    if (!initialDestination && initialRole !== "candidato" && initialRole !== "empresa" && accessParams.get("access") !== "1") {
+      window.location.replace("index.html");
+    }
     var requiredRole = accessParams.get("role");
     if (requiredRole !== "candidato" && requiredRole !== "empresa") requiredRole = "";
     if (requiredRole) {
@@ -494,6 +523,9 @@
       "encuesta.html": "la encuesta",
       "paquetes.html": "los paquetes para personas candidatas",
       "recomendadas.html": "las empresas recomendadas",
+      "perfil.html": "tu perfil",
+      "curriculum.html": "tu CV",
+      "guardadas.html": "tus ofertas guardadas",
       "candidatos.html": "el área de empleo",
       "empresas.html": "el portal de empresas",
       "paquetes-empresas.html": "los paquetes para empresas",
