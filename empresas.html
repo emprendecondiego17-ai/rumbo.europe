@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rumbo — Portal para empresas</title><link rel="stylesheet" href="styles.css?v=13"><script src="supabase-config.js?v=1" defer></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script><script src="cloud.js?v=1" defer></script><script src="script.js?v=13" defer></script><script src="perfil.js?v=4" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rumbo — Portal para empresas</title><link rel="stylesheet" href="styles.css?v=14"><script src="supabase-config.js?v=1" defer></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script><script src="cloud.js?v=2" defer></script><script src="script.js?v=14" defer></script><script src="perfil.js?v=5" defer></script></head>
 <body>
   <header class="site-header"><div class="wrap topbar"><a class="brand" href="empresas.html"><span class="brand-mark">✦</span><span>rumbo</span></a><button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="company-nav">☰</button><nav class="main-nav" id="company-nav" aria-label="Navegación para empresas"><a href="empresas.html" aria-current="page">Inicio</a><a href="candidatos-empresa.html">Candidatos</a><a href="paquetes-empresas.html">Paquetes</a><a href="publicar-oferta.html" class="nav-cta">Publicar una oferta →</a><a class="nav-cta" data-account-control href="acceso.html?access=1">Acceder / crear cuenta</a><button class="logout-nav-link" type="button" data-logout>Cerrar sesión</button></nav></div></header>
   <main class="page-main">
@@ -39,11 +39,15 @@
         <article class="surface company-metric"><span>Ofertas activas</span><strong id="company-metric-offers">0</strong></article>
         <article class="surface company-metric"><span>Personas que guardaron ofertas</span><strong id="company-metric-favorites">0</strong></article>
         <article class="surface company-metric"><span>Visitas a las ofertas</span><strong id="company-metric-views">0</strong></article>
+        <article class="surface company-metric"><span>Solicitudes recibidas</span><strong id="company-metric-applications">0</strong></article>
         <article class="surface company-metric"><span>En selección</span><strong id="company-metric-process">0</strong></article>
         <article class="surface company-metric"><span>Contratadas</span><strong id="company-metric-hired">0</strong></article>
       </div>
+      <div class="company-offers-heading"><h3>Mis ofertas y su impacto</h3><a class="text-link" href="publicar-oferta.html">Publicar otra oferta →</a></div>
+      <div class="company-offers-list" id="company-offers-list" aria-live="polite"></div>
+      <div class="sponsor-empty" id="company-offers-empty"><div><span class="pill">Tu empresa</span><h3>Aún no has publicado ofertas</h3><p>Publica tu primera vacante para ver aquí las visitas, favoritos y solicitudes que recibe.</p></div><a class="button" href="publicar-oferta.html">Publicar oferta →</a></div>
       <a class="button company-candidates-link" href="candidatos-empresa.html">Gestionar personas candidatas <span aria-hidden="true">→</span></a>
-      <p class="disclaimer">La actividad se comparte entre cuentas. Solo se muestra información básica del perfil de las personas candidatas; sus datos de contacto y CV se mantienen protegidos.</p>
+      <p class="disclaimer">En modo de prueba, la actividad se guarda en este navegador. Con la base de datos conectada, se actualiza para todas las cuentas. El CV y los datos de contacto solo se muestran después de pasar a una persona a selección.</p>
     </section>
     <section class="why-strip"><div class="wrap grid-3">
       <article class="why-point"><span class="tile-icon">◎</span><div><h3>Publicación ordenada</h3><p>Describe puesto, país, sector, duración, salario y requisitos.</p></div></article>

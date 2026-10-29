@@ -4,9 +4,9 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08275c">
   <title>Rumbo — Mi perfil</title>
-  <link rel="stylesheet" href="styles.css?v=13">
-  <script src="supabase-config.js?v=1" defer></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script><script src="cloud.js?v=1" defer></script><script src="script.js?v=13" defer></script>
-  <script src="perfil.js?v=4" defer></script>
+  <link rel="stylesheet" href="styles.css?v=14">
+  <script src="supabase-config.js?v=1" defer></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script><script src="cloud.js?v=2" defer></script><script src="script.js?v=14" defer></script>
+  <script src="perfil.js?v=5" defer></script>
 </head>
 <body>
   <header class="site-header"><div class="wrap topbar">
@@ -25,6 +25,7 @@
       </nav>
       <form class="surface form-card" id="profile-form">
         <div class="section-heading"><div><span class="pill">Datos personales</span><h2>Información de tu perfil</h2></div><p>Tu información se guarda en tu cuenta y puedes actualizarla cuando quieras.</p></div>
+        <div class="profile-photo-control"><img id="profile-photo-preview" class="profile-avatar profile-avatar-large" alt="Foto de perfil" hidden><div class="form-field"><label for="profile-photo">Foto de perfil</label><input id="profile-photo" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG o WEBP · máximo 2 MB</small></div></div>
         <div class="form-grid">
           <div class="form-field"><label for="profile-name">Nombre</label><input id="profile-name" name="name" autocomplete="name" required maxlength="100"></div>
           <div class="form-field"><label for="profile-email">Correo electrónico</label><input id="profile-email" name="email" type="email" readonly></div>

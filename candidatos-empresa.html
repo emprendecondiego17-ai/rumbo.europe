@@ -4,9 +4,9 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08275c">
   <title>Rumbo — Candidaturas de empresa</title>
-  <link rel="stylesheet" href="styles.css?v=13">
-  <script src="supabase-config.js?v=1" defer></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script><script src="cloud.js?v=1" defer></script><script src="script.js?v=13" defer></script>
-  <script src="perfil.js?v=4" defer></script>
+  <link rel="stylesheet" href="styles.css?v=14">
+  <script src="supabase-config.js?v=1" defer></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script><script src="cloud.js?v=2" defer></script><script src="script.js?v=14" defer></script>
+  <script src="perfil.js?v=5" defer></script>
 </head>
 <body>
   <header class="site-header"><div class="wrap topbar">
@@ -20,7 +20,8 @@
     <section class="wrap page-intro"><span class="eyebrow">Área de empresa</span><h1>Personas interesadas en tus ofertas.</h1><p>Consulta quién guardó una oferta, quién la vio y el estado de cada candidatura. Puedes mover a las personas interesadas a selección o marcarlas como contratadas.</p></section>
     <section class="wrap company-candidates-area">
       <div class="company-candidate-filters" role="tablist" aria-label="Filtrar personas candidatas">
-        <button type="button" role="tab" aria-selected="true" data-candidate-filter="favoritos">Guardaron la oferta <span id="count-favoritos">0</span></button>
+        <button type="button" role="tab" aria-selected="true" data-candidate-filter="solicitudes">Solicitudes <span id="count-solicitudes">0</span></button>
+        <button type="button" role="tab" aria-selected="false" data-candidate-filter="favoritos">Guardaron la oferta <span id="count-favoritos">0</span></button>
         <button type="button" role="tab" aria-selected="false" data-candidate-filter="vistos">Vieron la oferta <span id="count-vistos">0</span></button>
         <button type="button" role="tab" aria-selected="false" data-candidate-filter="proceso">En selección <span id="count-proceso">0</span></button>
         <button type="button" role="tab" aria-selected="false" data-candidate-filter="contratados">Contratados <span id="count-contratados">0</span></button>

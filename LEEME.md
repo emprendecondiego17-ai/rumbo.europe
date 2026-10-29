@@ -4,7 +4,7 @@ Rumbo conecta a personas que buscan empleo en Europa con ofertas de empresas. La
 
 ## Activar cuentas, ofertas y actualizaciones en directo
 
-La web necesita un proyecto gratuito de Supabase para guardar cuentas y compartir datos entre usuarios. La integración ya está preparada en estos archivos; mientras la conexión siga vacía, el acceso y la publicación online mostrarán que falta configurarla.
+La web puede probarse sin servidor usando cuentas y datos guardados solo en el navegador. Para guardar cuentas de forma segura y compartir solicitudes, actividad, fotos y CV entre usuarios y dispositivos, conecta el proyecto gratuito de Supabase con estos pasos.
 
 1. Entra en [supabase.com](https://supabase.com), inicia sesión y crea un proyecto. Guarda la contraseña de la base de datos en un lugar privado.
 2. En el proyecto, abre **SQL Editor → New query**. Copia todo el contenido de `supabase-schema.sql`, pégalo y pulsa **Run**. Esto crea las tablas, los permisos de privacidad, el espacio privado para CV y las suscripciones de actualizaciones.
@@ -22,14 +22,15 @@ La web necesita un proyecto gratuito de Supabase para guardar cuentas y comparti
 - La portada se puede visitar sin cuenta. Al abrir Encuesta, Paquetes o Empresas recomendadas se pide iniciar sesión y, tras entrar, se abre la página elegida.
 - El formulario de acceso inicia sesión en una cuenta existente. Para crear una, pulsa **Crear cuenta** y selecciona el tipo de perfil; ese tipo no se puede cambiar desde el icono.
 - El perfil y el CV se guardan en la cuenta. El archivo del CV queda privado y solo se permite a una empresa verlo después de pasar a selección o de ser marcada como contratada.
-- Las ofertas publicadas dentro de Rumbo se pueden guardar y valorar. La empresa recibe en directo favoritos, visitas, valoraciones y cambios en el proceso de selección.
+- Las ofertas de Rumbo se pueden guardar, valorar y solicitar. Desde tu perfil puedes consultar las ofertas guardadas.
 
 ### Empresa
 
 - Al registrarse, completa nombre legal o comercial, CIF/NIF, país, domicilio, teléfono y los demás datos que correspondan. El perfil de empresa se asocia al correo de acceso.
 - Publica ofertas desde **Publicar una oferta** e indica el número de vacantes. El nombre de empresa y el correo de contacto se toman del perfil de la cuenta.
-- El icono de perfil abre el panel de candidaturas, en una página independiente. Allí hay pestañas para personas que guardaron ofertas, visitas, selección y contrataciones. Se muestra nombre, ciudad, sector, destino y breve descripción; el correo y el teléfono no se muestran.
-- Los cambios de favoritos, visitas y candidaturas se actualizan en las otras sesiones conectadas. Una visita se cuenta cuando la tarjeta de una oferta aparece en pantalla o al abrir su enlace, una vez por persona y sesión para evitar inflar el contador.
+- El icono de perfil abre el perfil de empresa. Incluye las ofertas publicadas y el impacto de cada una: visitas, favoritos, solicitudes y contrataciones. Desde ahí se abre el panel de candidatos, con pestañas para solicitudes, favoritos, visitas, selección y contrataciones.
+- Cada ficha muestra nombre, foto y datos básicos. El contacto y el CV se desbloquean al pasar a una persona a selección. El contador de visitas evita duplicar una visita de la misma persona en la misma sesión.
+- Con Supabase conectado, las solicitudes y los cambios se actualizan en tiempo real entre cuentas. Sin Supabase, solo se comparten en el navegador donde se ha creado la cuenta de prueba.
 - Las empresas pueden valorar las ofertas publicadas en Rumbo. La encuesta conserva primero las coincidencias por país, sector y duración y, dentro de ellas, ordena mejor las valoradas y con mayor interés.
 
 ## Promoción y precios
@@ -46,12 +47,19 @@ Los importes mostrados son orientativos. La web no cobra todavía. Una empresa p
 - `perfil.html`, `curriculum.html` y `guardadas.html`: perfil personal, CV y ofertas guardadas.
 - `empresas.html`: perfil y actividad de la empresa.
 - `candidatos-empresa.html`: favoritos, visitas, selección y contrataciones.
+- `candidato-detalle.html`: ficha de una persona candidata y acceso privado al CV tras pasar a selección.
 - `publicar-oferta.html`: formulario de publicación de vacantes.
 
 ## Límites actuales
 
-El inicio de sesión es por correo y contraseña; Google y Apple todavía no están conectados. Los pagos tampoco están habilitados. Las ofertas externas enlazan a sus fuentes originales, así que su disponibilidad puede cambiar; solo las ofertas creadas por empresas en Rumbo generan métricas y valoraciones dentro de Rumbo. Antes de usar la web con público real, añade moderación de anuncios, política de privacidad y condiciones del servicio.
+El inicio de sesión es por correo y contraseña; Google y Apple todavía no están conectados. El modo de prueba guarda los datos solo en ese navegador; para un uso real hay que activar Supabase siguiendo los pasos anteriores. Los pagos tampoco están habilitados. Las ofertas externas enlazan a sus fuentes originales, así que su disponibilidad puede cambiar; solo las ofertas creadas por empresas en Rumbo generan métricas y valoraciones dentro de Rumbo. Antes de usar la web con público real, añade moderación de anuncios, política de privacidad y condiciones del servicio.
 
 ## Mapa
 
 Las formas de los países proceden del conjunto Admin 0 de Natural Earth a escala 1:50m, recortado al área europea. Natural Earth permite el uso libre de sus datos; consulta su [página de descarga y condiciones](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries/). Algunos microestados se señalan con un punto auxiliar para facilitar su selección.
+# Prueba de acceso y actividad de candidaturas
+
+Si todavía no has conectado Supabase, el registro permite probar el recorrido desde este navegador: crear una cuenta, iniciar sesión, publicar una vacante, solicitarla, guardar ofertas y revisar candidatos. Las cuentas y los datos de prueba permanecen en el almacenamiento de ese navegador; no se sincronizan entre teléfonos u ordenadores y no constituyen un servicio de autenticación de producción.
+
+Para habilitar cuentas compartidas, actividad entre dispositivos, solicitudes en tiempo real y almacenamiento privado de fotos/CV, configura las claves del proyecto Supabase en `supabase-config.js` y ejecuta el contenido actualizado de `supabase-schema.sql` en el SQL Editor del proyecto. La sección de empresa utiliza la tabla `offer_applications` y los espacios privados `rumbo-cvs` y `rumbo-avatars`.
+

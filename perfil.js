@@ -61,8 +61,8 @@
       }
 
       var isCompany = account.role === "empresa";
-      var label = isCompany ? "Candidatos de mi empresa" : "Mi perfil";
-      link.href = isCompany ? "candidatos-empresa.html" : "perfil.html";
+      var label = isCompany ? "Perfil de mi empresa" : "Mi perfil";
+      link.href = isCompany ? "empresas.html" : "perfil.html";
       link.classList.add("profile-nav-link");
       link.setAttribute("aria-label", label);
       link.setAttribute("title", label);
@@ -80,7 +80,7 @@
   function getProfileData(account) {
     if (window.RumboCloud && window.RumboCloud.isConfigured) return window.RumboCloud.getCurrentProfile() || account;
     var stored = readStored(accountKey(PROFILE_PREFIX, account.email), {});
-    return Object.assign({ name: account.name || "", email: account.email || "", phone: "", city: "", destination: "", sector: "", bio: "" }, stored);
+    return Object.assign({ id: account.id || "", name: account.name || "", email: account.email || "", phone: "", city: "", destination: "", sector: "", bio: "", avatarDataUrl: "" }, stored);
   }
 
   function initializeProfileEditor() {
@@ -93,6 +93,49 @@
       var input = form.elements[field];
       if (input) input.value = data[field] || "";
     });
+    var photoInput = document.getElementById("profile-photo");
+    var photoPreview = document.getElementById("profile-photo-preview");
+    async function showPhoto() {
+      if (!photoPreview) return;
+      var source = data.avatarDataUrl || "";
+      if (window.RumboCloud && window.RumboCloud.isConfigured) {
+        try { source = await window.RumboCloud.getMyAvatarUrl(); } catch (error) { source = ""; }
+      }
+      photoPreview.hidden = !source;
+      if (source) photoPreview.src = source;
+    }
+    showPhoto();
+    if (photoInput) photoInput.addEventListener("change", function () {
+      var file = photoInput.files && photoInput.files[0];
+      if (!file) return;
+      if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 2000000) {
+        document.getElementById("profile-status").textContent = "Elige una imagen JPG, PNG o WEBP de hasta 2 MB.";
+        photoInput.value = "";
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = async function () {
+        try {
+          if (window.RumboCloud && window.RumboCloud.isConfigured) {
+            await window.RumboCloud.uploadAvatar(file);
+            data.avatarDataUrl = "";
+            await showPhoto();
+            document.getElementById("profile-status").textContent = "Foto guardada en tu perfil.";
+          } else {
+            data.avatarDataUrl = String(reader.result || "");
+            var profile = getProfileData(account);
+            profile.avatarDataUrl = data.avatarDataUrl;
+            writeStored(accountKey(PROFILE_PREFIX, account.email), profile);
+            await showPhoto();
+            document.getElementById("profile-status").textContent = "Foto guardada en este navegador.";
+          }
+        } catch (error) {
+          document.getElementById("profile-status").textContent = error.message || "No se pudo guardar la foto.";
+        }
+      };
+      reader.onerror = function () { document.getElementById("profile-status").textContent = "No se pudo leer la imagen."; };
+      reader.readAsDataURL(file);
+    });
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
@@ -103,7 +146,8 @@
         city: form.elements.city.value.trim(),
         destination: form.elements.destination.value.trim(),
         sector: form.elements.sector.value,
-        bio: form.elements.bio.value.trim()
+        bio: form.elements.bio.value.trim(),
+        avatarDataUrl: data.avatarDataUrl || ""
       };
       try {
         if (window.RumboCloud && window.RumboCloud.isConfigured) {
@@ -496,6 +540,118 @@
     }
   }
 
+  function initializeCandidateDetail() {
+    var card = document.getElementById("candidate-detail-card");
+    if (!card) return;
+    var account = readSession();
+    if (!account || account.role !== "empresa") {
+      var query = new URLSearchParams({ next: "candidato-detalle.html", role: "empresa" });
+      query.set("candidate", new URLSearchParams(window.location.search).get("candidate") || "");
+      query.set("offer", new URLSearchParams(window.location.search).get("offer") || "");
+      window.location.replace("acceso.html?" + query.toString());
+      return;
+    }
+    var params = new URLSearchParams(window.location.search);
+    var candidateId = params.get("candidate") || "";
+    var offerId = params.get("offer") || "";
+    var status = document.getElementById("candidate-detail-status");
+    var actions = document.getElementById("candidate-detail-actions");
+
+    function section(title, value) {
+      if (!value) return "";
+      return '<section class="candidate-detail-section"><h3>' + escapeHtml(title) + '</h3><p>' + escapeHtml(value).replace(/\n/g, "<br>") + '</p></section>';
+    }
+
+    async function load() {
+      try {
+        var detail;
+        if (window.RumboCloud && window.RumboCloud.isConfigured) {
+          detail = await window.RumboCloud.getCandidateDetail(candidateId, offerId);
+        } else {
+          var candidateAccount = readStored(ACCOUNTS_KEY, []).find(function (item) { return item && item.id === candidateId && item.role === "candidato"; });
+          var offer = storedCompanyOffers(account).find(function (item) { return offerKey(item) === offerId; });
+          if (!candidateAccount || !offer) throw new Error("No encontramos esta persona o esta oferta en este navegador.");
+          var profile = readStored(accountKey(PROFILE_PREFIX, candidateAccount.email), {});
+          var pipeline = readStored(HIRING_PIPELINE_KEY, []);
+          var stageRecord = pipeline.find(function (item) { return normalizedEmail(item.companyEmail) === normalizedEmail(account.email) && normalizedEmail(item.candidateEmail) === normalizedEmail(candidateAccount.email) && item.offerKey === offerId; });
+          var application = readStored("rumboApplications", []).find(function (item) { return item.candidateEmail === candidateAccount.email && item.offerKey === offerId; }) || null;
+          var fullAllowed = stageRecord && (stageRecord.stage === "proceso" || stageRecord.stage === "contratado");
+          var cvData = fullAllowed ? readStored(accountKey(CV_PREFIX, candidateAccount.email), {}) : null;
+          var uploaded = fullAllowed ? readStored(accountKey(CV_FILE_PREFIX, candidateAccount.email), null) : null;
+          detail = {
+            offer: offer,
+            candidate: { full_name: profile.name || candidateAccount.name, city: profile.city || "", sector: profile.sector || "", destination: profile.destination || "", bio: profile.bio || "" },
+            stage: stageRecord && stageRecord.stage || "",
+            application: application,
+            full: fullAllowed ? Object.assign({ contact_email: candidateAccount.email, phone: profile.phone || "" }, cvData || {}) : null,
+            avatarUrl: profile.avatarDataUrl || "",
+            cvUrl: uploaded && uploaded.dataUrl || ""
+          };
+        }
+        var candidate = detail.candidate || {};
+        var full = detail.full || null;
+        var name = candidate.full_name || candidate.name || "Persona candidata";
+        document.getElementById("candidate-detail-name").textContent = name;
+        document.getElementById("candidate-detail-offer").textContent = "Oferta: " + ((detail.offer && detail.offer.title) || "");
+        document.getElementById("candidate-detail-basics").textContent = [candidate.city, candidate.sector, candidate.destination ? "Destino preferido: " + candidate.destination : ""].filter(Boolean).join(" · ") || "Aún no ha añadido ciudad, sector o destino.";
+        document.getElementById("candidate-detail-bio").textContent = candidate.bio || "La persona todavía no ha añadido una presentación.";
+        var stageLabel = detail.stage === "contratado" ? "Contratada" : detail.stage === "proceso" ? "En selección" : (detail.application ? "Solicitud recibida" : "Persona interesada");
+        document.getElementById("candidate-detail-stage").textContent = stageLabel;
+        var avatar = document.getElementById("candidate-detail-avatar");
+        var placeholder = document.getElementById("candidate-detail-avatar-placeholder");
+        avatar.hidden = !detail.avatarUrl;
+        placeholder.hidden = !!detail.avatarUrl;
+        if (detail.avatarUrl) avatar.src = detail.avatarUrl;
+        else placeholder.textContent = String(name).trim().charAt(0).toUpperCase();
+        var sections = full ? section("Resumen profesional", full.cv_summary || full.summary) + section("Experiencia", full.cv_experience || full.experience) + section("Formación", full.cv_education || full.education) + section("Competencias", full.cv_skills || full.skills) + section("Idiomas", full.cv_languages || full.languages) : "";
+        if (full) sections += section("Contacto", [full.contact_email || full.email, full.phone].filter(Boolean).join(" · "));
+        if (detail.cvUrl) sections += '<section class="candidate-detail-section"><h3>Currículum adjunto</h3><p><a class="button secondary" href="' + escapeHtml(detail.cvUrl) + '" target="_blank" rel="noopener">Abrir o descargar CV</a></p></section>';
+        document.getElementById("candidate-detail-sections").innerHTML = sections;
+        document.getElementById("candidate-detail-private").hidden = !!full;
+        actions.innerHTML = detail.stage === "proceso"
+          ? '<button class="button" type="button" data-detail-stage="contratado">Marcar como contratada</button>'
+          : detail.stage === "contratado"
+            ? '<span class="pill">Empleado/a contratado/a</span>'
+            : '<button class="button" type="button" data-detail-stage="proceso">Pasar a selección y ver CV</button>';
+        card.hidden = false;
+        status.textContent = "";
+      } catch (error) {
+        status.textContent = error.message || "No se pudo cargar este perfil.";
+      }
+    }
+
+    actions.addEventListener("click", async function (event) {
+      var button = event.target.closest("[data-detail-stage]");
+      if (!button) return;
+      button.disabled = true;
+      try {
+        var stage = button.getAttribute("data-detail-stage");
+        if (window.RumboCloud && window.RumboCloud.isConfigured) {
+          await window.RumboCloud.setCandidateStage(offerId, candidateId, stage);
+        } else {
+          var accounts = readStored(ACCOUNTS_KEY, []);
+          var candidateAccount = accounts.find(function (item) { return item && item.id === candidateId; });
+          var candidateEmail = normalizedEmail(candidateAccount && candidateAccount.email);
+          if (!candidateEmail) throw new Error("No encontramos la cuenta candidata en este navegador.");
+          var pipeline = readStored(HIRING_PIPELINE_KEY, []);
+          if (!Array.isArray(pipeline)) pipeline = [];
+          var existing = pipeline.find(function (item) { return normalizedEmail(item.companyEmail) === normalizedEmail(account.email) && normalizedEmail(item.candidateEmail) === candidateEmail && item.offerKey === offerId; });
+          if (existing) { existing.stage = stage; existing.updatedAt = Date.now(); }
+          else pipeline.push({ companyEmail: account.email, candidateEmail: candidateEmail, offerKey: offerId, stage: stage, updatedAt: Date.now() });
+          writeStored(HIRING_PIPELINE_KEY, pipeline);
+          var applications = readStored("rumboApplications", []);
+          applications.forEach(function (item) { if (item.candidateEmail === candidateEmail && item.offerKey === offerId) item.status = stage === "contratado" ? "contratada" : "proceso"; });
+          writeStored("rumboApplications", applications);
+        }
+        await load();
+      } catch (error) {
+        status.textContent = error.message || "No se pudo actualizar la candidatura.";
+        button.disabled = false;
+      }
+    });
+    load();
+  }
+
   function normalizedEmail(value) {
     return String(value || "").trim().toLowerCase();
   }
@@ -522,8 +678,8 @@
   function initializeRealtimeCompanyDashboard(activityPanel, candidateList) {
     var account = readSession();
     if (!account || account.role !== "empresa") return;
-    var activeFilter = "favoritos";
-    var dashboard = { offers: [], favorites: [], views: [], pipeline: [], candidates: {} };
+    var activeFilter = "solicitudes";
+    var dashboard = { offers: [], favorites: [], views: [], pipeline: [], applications: [], candidates: {} };
     var status = document.getElementById("company-candidate-status");
 
     function distinctCandidateCount(records) {
@@ -549,6 +705,7 @@
 
     function recordsFor(filter) {
       var source = filter === "vistos" ? dashboard.views : dashboard.favorites;
+      if (filter === "solicitudes") return (dashboard.applications || []).filter(function (entry) { return entry.status === "recibida"; });
       if (filter === "proceso" || filter === "contratados") {
         return dashboard.pipeline.filter(function (entry) { return entry.stage === (filter === "proceso" ? "proceso" : "contratado"); });
       }
@@ -565,10 +722,18 @@
       if (filter === "favoritos" || filter === "vistos") { buttonText = "Pasar a selección"; nextStage = "proceso"; }
       if (filter === "proceso") { buttonText = "Marcar como contratada"; nextStage = "contratado"; }
       if (filter === "contratados") { buttonText = "Reabrir candidatura"; nextStage = "proceso"; }
-      return '<article class="surface company-candidate-card"><div class="candidate-card-heading"><div><span class="pill">' + escapeHtml(filter === "proceso" ? "En selección" : (filter === "contratados" ? "Contratada" : (filter === "vistos" ? "Vio la oferta" : "Guardó la oferta"))) + '</span><h3>' + escapeHtml(candidate.full_name || "Persona candidata") + '</h3><p class="candidate-offer-title">Interés en: <strong>' + escapeHtml(offer.title || "Oferta") + '</strong> · ' + escapeHtml(offer.company || "Empresa") + ' · ' + escapeHtml(Number(offer.vacancies || 1)) + (Number(offer.vacancies || 1) === 1 ? " vacante" : " vacantes") + '</p></div><span class="candidate-stage-mark" aria-hidden="true">' + (stage === "contratado" ? "✓" : "→") + '</span></div>' +
+      var candidateId = entry.candidate_id;
+      var detailUrl = "candidato-detalle.html?candidate=" + encodeURIComponent(candidateId) + "&offer=" + encodeURIComponent(entry.offer_id);
+      var avatar = candidate.avatarUrl ? '<img class="profile-avatar" src="' + escapeHtml(candidate.avatarUrl) + '" alt="Foto de ' + escapeHtml(candidate.full_name || "persona candidata") + '">' : '<span class="profile-avatar profile-avatar-placeholder" aria-hidden="true">' + escapeHtml(String(candidate.full_name || "?").trim().charAt(0).toUpperCase()) + '</span>';
+      var actions = '<a class="button secondary" href="' + detailUrl + '">Ver perfil y CV</a>';
+      if (filter === "proceso") actions += '<button class="button" type="button" data-candidate-stage="contratado" data-candidate-id="' + escapeHtml(candidateId) + '" data-offer-id="' + escapeHtml(entry.offer_id) + '">Marcar como contratada</button>';
+      else if (filter === "contratados") actions += '<button class="button secondary" type="button" data-candidate-stage="proceso" data-candidate-id="' + escapeHtml(candidateId) + '" data-offer-id="' + escapeHtml(entry.offer_id) + '">Reabrir candidatura</button>';
+      else if (filter === "solicitudes") actions += '<button class="button" type="button" data-candidate-stage="proceso" data-candidate-id="' + escapeHtml(candidateId) + '" data-offer-id="' + escapeHtml(entry.offer_id) + '">Pasar a selección</button><button class="button secondary" type="button" data-candidate-discard="true" data-candidate-id="' + escapeHtml(candidateId) + '" data-offer-id="' + escapeHtml(entry.offer_id) + '">Descartar</button>';
+      else actions += '<button class="button" type="button" data-candidate-stage="proceso" data-candidate-id="' + escapeHtml(candidateId) + '" data-offer-id="' + escapeHtml(entry.offer_id) + '">Pasar a selección</button>';
+      return '<article class="surface company-candidate-card"><div class="candidate-card-heading">' + avatar + '<div class="candidate-card-main"><span class="pill">' + escapeHtml(filter === "proceso" ? "En selección" : (filter === "contratados" ? "Contratada" : filter === "solicitudes" ? "Solicitó el puesto" : (filter === "vistos" ? "Vio la oferta" : "Guardó la oferta"))) + '</span><h3>' + escapeHtml(candidate.full_name || "Persona candidata") + '</h3><p class="candidate-offer-title">Interés en: <strong>' + escapeHtml(offer.title || "Oferta") + '</strong> · ' + escapeHtml(offer.company || "Empresa") + ' · ' + escapeHtml(Number(offer.vacancies || 1)) + (Number(offer.vacancies || 1) === 1 ? " vacante" : " vacantes") + '</p></div><span class="candidate-stage-mark" aria-hidden="true">' + (stage === "contratado" ? "✓" : "→") + '</span></div>' +
         (details.length ? '<p class="candidate-profile-line">' + details.map(escapeHtml).join(" · ") + '</p>' : '<p class="candidate-profile-line">La persona aún no ha completado su ciudad, sector o destino.</p>') +
         (candidate.bio ? '<p class="candidate-profile-bio">' + escapeHtml(String(candidate.bio).slice(0, 240)) + (String(candidate.bio).length > 240 ? "…" : "") + '</p>' : '') +
-        '<div class="candidate-card-actions"><button class="button' + (nextStage === "proceso" ? " secondary" : "") + '" type="button" data-candidate-stage="' + nextStage + '" data-candidate-id="' + escapeHtml(entry.candidate_id) + '" data-offer-id="' + escapeHtml(entry.offer_id) + '">' + buttonText + '</button></div></article>';
+        '<div class="candidate-card-actions">' + actions + '</div></article>';
     }
 
     function render() {
@@ -576,12 +741,14 @@
       var favorites = uniqueCandidateOfferRows(dashboard.favorites || []);
       var views = dashboard.views || [];
       var pipeline = dashboard.pipeline || [];
+      var applications = dashboard.applications || [];
       var values = {
         "company-metric-vacancies": offers.reduce(function (total, offer) { return total + Number(offer.vacancies || 1); }, 0),
         "company-metric-declared": Number(account.company && account.company.vacancyCount || 0),
         "company-metric-offers": offers.filter(function (offer) { return offer.isActive !== false; }).length,
         "company-metric-favorites": distinctCandidateCount(favorites),
         "company-metric-views": views.length,
+        "company-metric-applications": applications.filter(function (entry) { return entry.status === "recibida"; }).length,
         "company-metric-process": distinctCandidateCount(pipeline.filter(function (entry) { return entry.stage === "proceso"; })),
         "company-metric-hired": distinctCandidateCount(pipeline.filter(function (entry) { return entry.stage === "contratado"; }))
       };
@@ -589,11 +756,24 @@
       var visibleCounts = {
         "count-favoritos": distinctCandidateCount(recordsFor("favoritos")),
         "count-vistos": distinctCandidateCount(recordsFor("vistos")),
+        "count-solicitudes": distinctCandidateCount(recordsFor("solicitudes")),
         "count-proceso": distinctCandidateCount(recordsFor("proceso")),
         "count-contratados": distinctCandidateCount(recordsFor("contratados"))
       };
       Object.keys(visibleCounts).forEach(function (id) { var node = document.getElementById(id); if (node) node.textContent = String(visibleCounts[id]); });
       if (activityPanel) activityPanel.hidden = false;
+      var offerList = document.getElementById("company-offers-list");
+      var offerEmpty = document.getElementById("company-offers-empty");
+      if (offerList) {
+        offerList.innerHTML = offers.map(function (offer) {
+          var favoriteCount = favorites.filter(function (row) { return row.offer_id === offer.id; }).length;
+          var viewCount = views.filter(function (row) { return row.offer_id === offer.id; }).length;
+          var applicationCount = applications.filter(function (row) { return row.offer_id === offer.id && row.status !== "descartada"; }).length;
+          var hiredCount = pipeline.filter(function (row) { return row.offer_id === offer.id && row.stage === "contratado"; }).length;
+          return '<article class="surface company-offer-row"><div><span class="pill">' + escapeHtml(offer.country || "Europa") + '</span><h3>' + escapeHtml(offer.title || "Oferta") + '</h3><p>' + escapeHtml(offer.sectorLabel || "Sector sin indicar") + ' · ' + escapeHtml(offer.location || "Ubicación no indicada") + ' · ' + escapeHtml(Number(offer.vacancies || 1)) + (Number(offer.vacancies || 1) === 1 ? " vacante" : " vacantes") + '</p></div><div class="company-offer-impact"><span><strong>' + viewCount + '</strong> visitas</span><span><strong>' + favoriteCount + '</strong> favoritos</span><span><strong>' + applicationCount + '</strong> solicitudes</span><span><strong>' + hiredCount + '</strong> contrataciones</span></div><a class="text-link" href="candidatos-empresa.html">Gestionar →</a></article>';
+        }).join("");
+      }
+      if (offerEmpty) offerEmpty.hidden = offers.length > 0;
       if (!candidateList) return;
       var rows = recordsFor(activeFilter);
       candidateList.innerHTML = rows.map(function (entry) { return makeCandidateCard(entry, activeFilter); }).join("");
@@ -605,6 +785,7 @@
       var empty = document.getElementById("company-candidate-empty");
       var emptyTitle = document.getElementById("company-candidate-empty-title");
       var labels = { favoritos: "personas que hayan guardado ofertas", vistos: "personas que hayan visitado ofertas", proceso: "candidaturas en selección", contratados: "personas contratadas" };
+      labels.solicitudes = "solicitudes de empleo";
       if (empty) empty.hidden = rows.length > 0;
       if (emptyTitle) emptyTitle.textContent = "Todavía no hay " + (labels[activeFilter] || "personas") + " en esta sección.";
       if (status) status.textContent = rows.length + (rows.length === 1 ? " candidatura visible." : " candidaturas visibles.");
@@ -626,6 +807,15 @@
         button.addEventListener("click", function () { activeFilter = button.getAttribute("data-candidate-filter"); render(); });
       });
       document.addEventListener("click", async function (event) {
+        var discard = event.target.closest("[data-candidate-discard]");
+        if (discard) {
+          try {
+            await window.RumboCloud.setApplicationStatus(discard.getAttribute("data-offer-id"), discard.getAttribute("data-candidate-id"), "descartada");
+            await refresh();
+            if (status) status.textContent = "Solicitud descartada.";
+          } catch (error) { if (status) status.textContent = error.message || "No se pudo descartar la solicitud."; }
+          return;
+        }
         var button = event.target.closest("[data-candidate-stage]");
         if (!button) return;
         try {
@@ -669,6 +859,9 @@
     var favoriteRecords = [];
     var views = readStored(OFFER_VIEWS_KEY, []);
     var viewRecords = [];
+    var applications = readStored("rumboApplications", []);
+    if (!Array.isArray(applications)) applications = [];
+    var applicationRecords = [];
 
     function addRecord(records, candidateEmail, key, type) {
       var email = normalizedEmail(candidateEmail);
@@ -710,6 +903,23 @@
       addRecord(viewRecords, view.candidateEmail, key, "vistos");
     });
 
+    function refreshApplicationRecords() {
+      applicationRecords.length = 0;
+      applications.forEach(function (application) {
+        if (!application) return;
+        var key = String(application.offerKey || "");
+        if (!offerByKey[key] && normalizedEmail(application.offer && application.offer.ownerEmail) === normalizedEmail(account.email)) {
+          var matchedOffer = offers.find(function (offer) { return offer.title === application.offer.title; });
+          if (matchedOffer) key = offerKey(matchedOffer);
+        }
+        var email = normalizedEmail(application.candidateEmail);
+        var offer = offerByKey[key];
+        if (!offer || !email || !accountsByEmail[email]) return;
+        applicationRecords.push({ candidateEmail: email, candidateId: application.candidateId || accountsByEmail[email].id || "", offerKey: key, offer: offer, type: "solicitudes", status: application.status || "recibida", createdAt: application.createdAt || "" });
+      });
+    }
+    refreshApplicationRecords();
+
     var pipeline = readStored(HIRING_PIPELINE_KEY, []);
     if (!Array.isArray(pipeline)) pipeline = [];
     var companyPipeline = pipeline.filter(function (item) { return item && normalizedEmail(item.companyEmail) === normalizedEmail(account.email); });
@@ -741,19 +951,25 @@
     function recordsFor(filter) {
       if (filter === "proceso") return processRecords;
       if (filter === "contratados") return hiredRecords;
+      if (filter === "solicitudes") return applicationRecords.filter(function (record) { return record.status === "recibida"; });
       var source = filter === "vistos" ? viewRecords : favoriteRecords;
       return source.filter(function (record) { return !pipelineStage(record.candidateEmail, record.offerKey); });
     }
 
     function candidateCard(record, filter) {
       var profile = profileFor(record.candidateEmail);
+      var candidateAccount = accountsByEmail[record.candidateEmail] || {};
+      var candidateId = record.candidateId || candidateAccount.id || "";
       var details = [profile.city, profile.sector, profile.destination ? "Busca empleo en " + profile.destination : ""].filter(Boolean);
       var stage = pipelineStage(record.candidateEmail, record.offerKey);
-      var action = "";
-      if (filter === "proceso") action = '<button class="button" type="button" data-candidate-stage="contratado" data-candidate-email="' + escapeHtml(record.candidateEmail) + '" data-offer-key="' + escapeHtml(record.offerKey) + '">Marcar como contratada</button>';
-      else if (filter === "contratados") action = '<button class="button secondary" type="button" data-candidate-stage="proceso" data-candidate-email="' + escapeHtml(record.candidateEmail) + '" data-offer-key="' + escapeHtml(record.offerKey) + '">Reabrir candidatura</button>';
-      else action = '<button class="button secondary" type="button" data-candidate-stage="proceso" data-candidate-email="' + escapeHtml(record.candidateEmail) + '" data-offer-key="' + escapeHtml(record.offerKey) + '">Pasar a selección</button>';
-      return '<article class="surface company-candidate-card"><div class="candidate-card-heading"><div><span class="pill">' + escapeHtml(filter === "proceso" ? "En selección" : (filter === "contratados" ? "Contratada" : (filter === "vistos" ? "Vio la oferta" : "Oferta guardada"))) + '</span><h3>' + escapeHtml(profile.name || "Persona candidata") + '</h3><p class="candidate-offer-title">Interés en: <strong>' + escapeHtml(record.offer.title) + '</strong> · ' + escapeHtml(record.offer.company) + ' · ' + escapeHtml(Number(record.offer.vacancies || 1)) + (Number(record.offer.vacancies || 1) === 1 ? " vacante" : " vacantes") + '</p></div><span class="candidate-stage-mark" aria-hidden="true">' + (stage === "contratado" ? "✓" : "→") + '</span></div>' +
+      var detailUrl = "candidato-detalle.html?candidate=" + encodeURIComponent(candidateId) + "&offer=" + encodeURIComponent(record.offerKey);
+      var avatar = profile.avatarDataUrl ? '<img class="profile-avatar" src="' + escapeHtml(profile.avatarDataUrl) + '" alt="Foto de ' + escapeHtml(profile.name || "persona candidata") + '">' : '<span class="profile-avatar profile-avatar-placeholder" aria-hidden="true">' + escapeHtml(String(profile.name || "?").trim().charAt(0).toUpperCase()) + '</span>';
+      var action = '<a class="button secondary" href="' + detailUrl + '">Ver perfil y CV</a>';
+      if (filter === "proceso") action += '<button class="button" type="button" data-candidate-stage="contratado" data-candidate-email="' + escapeHtml(record.candidateEmail) + '" data-offer-key="' + escapeHtml(record.offerKey) + '">Marcar como contratada</button>';
+      else if (filter === "contratados") action += '<button class="button secondary" type="button" data-candidate-stage="proceso" data-candidate-email="' + escapeHtml(record.candidateEmail) + '" data-offer-key="' + escapeHtml(record.offerKey) + '">Reabrir candidatura</button>';
+      else if (filter === "solicitudes") action += '<button class="button" type="button" data-candidate-stage="proceso" data-candidate-email="' + escapeHtml(record.candidateEmail) + '" data-offer-key="' + escapeHtml(record.offerKey) + '">Pasar a selección</button><button class="button secondary" type="button" data-candidate-discard="true" data-candidate-email="' + escapeHtml(record.candidateEmail) + '" data-offer-key="' + escapeHtml(record.offerKey) + '">Descartar</button>';
+      else action += '<button class="button" type="button" data-candidate-stage="proceso" data-candidate-email="' + escapeHtml(record.candidateEmail) + '" data-offer-key="' + escapeHtml(record.offerKey) + '">Pasar a selección</button>';
+      return '<article class="surface company-candidate-card"><div class="candidate-card-heading">' + avatar + '<div class="candidate-card-main"><span class="pill">' + escapeHtml(filter === "proceso" ? "En selección" : (filter === "contratados" ? "Contratada" : filter === "solicitudes" ? "Solicitó el puesto" : (filter === "vistos" ? "Vio la oferta" : "Guardó la oferta"))) + '</span><h3>' + escapeHtml(profile.name || candidateAccount.name || "Persona candidata") + '</h3><p class="candidate-offer-title">Interés en: <strong>' + escapeHtml(record.offer.title) + '</strong> · ' + escapeHtml(record.offer.company) + ' · ' + escapeHtml(Number(record.offer.vacancies || 1)) + (Number(record.offer.vacancies || 1) === 1 ? " vacante" : " vacantes") + '</p></div><span class="candidate-stage-mark" aria-hidden="true">' + (stage === "contratado" ? "✓" : "→") + '</span></div>' +
         (details.length ? '<p class="candidate-profile-line">' + details.map(escapeHtml).join(" · ") + '</p>' : '<p class="candidate-profile-line">Aún no ha completado ciudad, sector o destino en su perfil.</p>') +
         (profile.bio ? '<p class="candidate-profile-bio">' + escapeHtml(String(profile.bio).slice(0, 240)) + (String(profile.bio).length > 240 ? "…" : "") + '</p>' : '') + '<div class="candidate-card-actions">' + action + '</div></article>';
     }
@@ -770,7 +986,7 @@
       var empty = document.getElementById("company-candidate-empty");
       var title = document.getElementById("company-candidate-empty-title");
       var status = document.getElementById("company-candidate-status");
-      var labels = { favoritos: "personas que hayan guardado", vistos: "personas que hayan visto", proceso: "candidaturas en selección", contratados: "personas contratadas" };
+      var labels = { solicitudes: "solicitudes recibidas", favoritos: "personas que hayan guardado", vistos: "personas que hayan visto", proceso: "candidaturas en selección", contratados: "personas contratadas" };
       if (empty) empty.hidden = currentRecords.length > 0;
       if (title) title.textContent = currentRecords.length ? "" : "Todavía no hay " + (labels[filter] || "personas") + " en esta sección.";
       if (status) status.textContent = currentRecords.length + (currentRecords.length === 1 ? " candidatura en esta sección." : " candidaturas en esta sección.");
@@ -786,6 +1002,7 @@
         "company-metric-offers": offers.length,
         "company-metric-favorites": uniqueEmails(favoriteRecords).length,
         "company-metric-views": uniqueEmails(viewRecords).length,
+        "company-metric-applications": applicationRecords.filter(function (record) { return record.status === "recibida"; }).length,
         "company-metric-process": uniqueEmails(processRecords).length,
         "company-metric-hired": uniqueEmails(hiredRecords).length
       };
@@ -793,22 +1010,50 @@
       var countValues = {
         "count-favoritos": uniqueEmails(recordsFor("favoritos")).length,
         "count-vistos": uniqueEmails(recordsFor("vistos")).length,
+        "count-solicitudes": uniqueEmails(recordsFor("solicitudes")).length,
         "count-proceso": uniqueEmails(processRecords).length,
         "count-contratados": uniqueEmails(hiredRecords).length
       };
       Object.keys(countValues).forEach(function (id) { var node = document.getElementById(id); if (node) node.textContent = String(countValues[id]); });
       if (activityPanel) activityPanel.hidden = false;
+      var offerList = document.getElementById("company-offers-list");
+      var offerEmpty = document.getElementById("company-offers-empty");
+      if (offerList) offerList.innerHTML = offers.map(function (offer) {
+        var key = offerKey(offer);
+        var favoriteCount = favoriteRecords.filter(function (record) { return record.offerKey === key; }).length;
+        var viewCount = viewRecords.filter(function (record) { return record.offerKey === key; }).length;
+        var applicationCount = applicationRecords.filter(function (record) { return record.offerKey === key && record.status !== "descartada"; }).length;
+        var hiredCount = hiredRecords.filter(function (record) { return record.offerKey === key; }).length;
+        return '<article class="surface company-offer-row"><div><span class="pill">' + escapeHtml(offer.country || "Europa") + '</span><h3>' + escapeHtml(offer.title || "Oferta") + '</h3><p>' + escapeHtml(offer.sectorLabel || "Sector sin indicar") + ' · ' + escapeHtml(offer.location || "Ubicación no indicada") + ' · ' + escapeHtml(Number(offer.vacancies || 1)) + (Number(offer.vacancies || 1) === 1 ? " vacante" : " vacantes") + '</p></div><div class="company-offer-impact"><span><strong>' + viewCount + '</strong> visitas</span><span><strong>' + favoriteCount + '</strong> favoritos</span><span><strong>' + applicationCount + '</strong> solicitudes</span><span><strong>' + hiredCount + '</strong> contrataciones</span></div><a class="text-link" href="candidatos-empresa.html">Gestionar →</a></article>';
+      }).join("");
+      if (offerEmpty) offerEmpty.hidden = offers.length > 0;
     }
 
     updateMetrics();
     window.addEventListener("rumboCompanyProfileUpdated", updateMetrics);
     if (candidateList) {
-      var initialFilter = "favoritos";
+      var initialFilter = "solicitudes";
       renderCandidateList(initialFilter);
       document.querySelectorAll("[data-candidate-filter]").forEach(function (button) {
         button.addEventListener("click", function () { renderCandidateList(button.getAttribute("data-candidate-filter")); });
       });
       document.addEventListener("click", function (event) {
+        var discard = event.target.closest("[data-candidate-discard]");
+        if (discard) {
+          var discardEmail = normalizedEmail(discard.getAttribute("data-candidate-email"));
+          var discardKey = discard.getAttribute("data-offer-key");
+          applications.forEach(function (application) {
+            if (normalizedEmail(application.candidateEmail) === discardEmail && application.offerKey === discardKey) application.status = "descartada";
+          });
+          writeStored("rumboApplications", applications);
+          var selectedFilter = document.querySelector('[data-candidate-filter][aria-selected="true"]');
+          refreshApplicationRecords();
+          updateMetrics();
+          renderCandidateList(selectedFilter ? selectedFilter.getAttribute("data-candidate-filter") : "solicitudes");
+          var discardStatus = document.getElementById("company-candidate-status");
+          if (discardStatus) discardStatus.textContent = "Solicitud descartada.";
+          return;
+        }
         var button = event.target.closest("[data-candidate-stage]");
         if (!button) return;
         var candidateEmail = normalizedEmail(button.getAttribute("data-candidate-email"));
@@ -819,10 +1064,15 @@
         else pipeline.push({ companyEmail: normalizedEmail(account.email), candidateEmail: candidateEmail, offerKey: key, stage: stage, updatedAt: Date.now() });
         try {
           writeStored(HIRING_PIPELINE_KEY, pipeline);
+          applications.forEach(function (application) {
+            if (normalizedEmail(application.candidateEmail) === candidateEmail && application.offerKey === key) application.status = stage === "contratado" ? "contratada" : "proceso";
+          });
+          writeStored("rumboApplications", applications);
           refreshPipelineRecords();
+          refreshApplicationRecords();
           updateMetrics();
           var activeTab = document.querySelector('[data-candidate-filter][aria-selected="true"]');
-          renderCandidateList(activeTab ? activeTab.getAttribute("data-candidate-filter") : "favoritos");
+          renderCandidateList(activeTab ? activeTab.getAttribute("data-candidate-filter") : "solicitudes");
           var status = document.getElementById("company-candidate-status");
           if (status) status.textContent = stage === "contratado" ? "Candidatura marcada como contratada." : "Candidatura añadida al proceso de selección.";
         } catch (error) {
@@ -840,6 +1090,7 @@
     initializeSavedOffers();
     initializeCompanyProfile();
     initializeCompanyDashboard();
+    initializeCandidateDetail();
     fillCompanyOfferForm();
   }
 

@@ -6,6 +6,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   role text not null check (role in ('candidato', 'empresa')),
   full_name text not null default '',
+  contact_email text not null default '',
   phone text not null default '',
   city text not null default '',
   destination text not null default '',
@@ -37,6 +38,7 @@ create table if not exists public.candidate_public_profiles (
   sector text not null default '',
   destination text not null default '',
   bio text not null default '',
+  avatar_path text not null default '',
   updated_at timestamptz not null default now()
 );
 
@@ -101,11 +103,26 @@ create table if not exists public.candidate_pipeline (
   primary key (offer_id, candidate_id)
 );
 
+create table if not exists public.offer_applications (
+  offer_id uuid not null references public.job_offers(id) on delete cascade,
+  candidate_id uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  status text not null default 'recibida' check (status in ('recibida', 'proceso', 'contratada', 'descartada')),
+  cover_note text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (offer_id, candidate_id)
+);
+
+alter table public.profiles add column if not exists contact_email text not null default '';
+alter table public.candidate_public_profiles add column if not exists avatar_path text not null default '';
+update public.profiles p set contact_email = u.email from auth.users u where p.id = u.id and p.contact_email = '';
+
 create index if not exists job_offers_company_id_idx on public.job_offers(company_id);
 create index if not exists job_offers_country_sector_idx on public.job_offers(country, sector);
 create index if not exists offer_favorites_candidate_id_idx on public.offer_favorites(candidate_id);
 create index if not exists offer_views_candidate_id_idx on public.offer_views(candidate_id);
 create index if not exists candidate_pipeline_candidate_id_idx on public.candidate_pipeline(candidate_id);
+create index if not exists offer_applications_candidate_id_idx on public.offer_applications(candidate_id);
 
 create or replace function private.current_role()
 returns text language sql stable security definer set search_path = ''
@@ -139,6 +156,7 @@ as $$
     exists (select 1 from public.offer_favorites f join public.job_offers o on o.id = f.offer_id where f.candidate_id = target_candidate and o.company_id = (select auth.uid()))
     or exists (select 1 from public.offer_views v join public.job_offers o on o.id = v.offer_id where v.candidate_id = target_candidate and o.company_id = (select auth.uid()))
     or exists (select 1 from public.candidate_pipeline p join public.job_offers o on o.id = p.offer_id where p.candidate_id = target_candidate and o.company_id = (select auth.uid()))
+    or exists (select 1 from public.offer_applications a join public.job_offers o on o.id = a.offer_id where a.candidate_id = target_candidate and o.company_id = (select auth.uid()))
   )
 $$;
 
@@ -149,6 +167,7 @@ as $$
     exists (select 1 from public.offer_favorites f where f.offer_id = target_offer and f.candidate_id = target_candidate)
     or exists (select 1 from public.offer_views v where v.offer_id = target_offer and v.candidate_id = target_candidate)
     or exists (select 1 from public.candidate_pipeline p where p.offer_id = target_offer and p.candidate_id = target_candidate)
+    or exists (select 1 from public.offer_applications a where a.offer_id = target_offer and a.candidate_id = target_candidate)
   )
 $$;
 
@@ -226,13 +245,13 @@ begin
     declared_vacancies := least(999999, (meta->>'vacancy_count')::integer);
   end if;
   insert into public.profiles (
-    id, role, full_name, phone, city, destination, sector, bio,
+    id, role, full_name, contact_email, phone, city, destination, sector, bio,
     company_name, tax_id, company_country, legal_form, company_address,
     company_phone, website, vacancy_count
   ) values (
     new.id,
     case when meta->>'role' = 'empresa' then 'empresa' else 'candidato' end,
-    coalesce(meta->>'full_name', ''), coalesce(meta->>'phone', ''),
+    coalesce(meta->>'full_name', ''), coalesce(new.email, ''), coalesce(meta->>'phone', ''),
     coalesce(meta->>'city', ''), coalesce(meta->>'destination', ''),
     coalesce(meta->>'sector', ''), coalesce(meta->>'bio', ''),
     coalesce(meta->>'company_name', ''), coalesce(meta->>'tax_id', ''),
@@ -298,8 +317,9 @@ alter table public.offer_favorites enable row level security;
 alter table public.offer_views enable row level security;
 alter table public.offer_ratings enable row level security;
 alter table public.candidate_pipeline enable row level security;
+alter table public.offer_applications enable row level security;
 
-revoke all on public.profiles, public.candidate_public_profiles, public.job_offers, public.offer_favorites, public.offer_views, public.offer_ratings, public.candidate_pipeline from anon, authenticated;
+revoke all on public.profiles, public.candidate_public_profiles, public.job_offers, public.offer_favorites, public.offer_views, public.offer_ratings, public.candidate_pipeline, public.offer_applications from anon, authenticated;
 grant select on public.profiles to authenticated;
 grant update (full_name, phone, city, destination, sector, bio, cv_summary, cv_experience, cv_education, cv_skills, cv_languages, cv_path, cv_name, company_name, tax_id, company_country, legal_form, company_address, company_phone, website, vacancy_count) on public.profiles to authenticated;
 grant select, insert, update on public.candidate_public_profiles to authenticated;
@@ -311,9 +331,12 @@ grant select, insert, delete on public.offer_favorites to authenticated;
 grant select, insert on public.offer_views to authenticated;
 grant select, insert, update on public.offer_ratings to authenticated;
 grant select, insert, update, delete on public.candidate_pipeline to authenticated;
+grant select, insert, update, delete on public.offer_applications to authenticated;
 
 drop policy if exists "profile owner reads own profile" on public.profiles;
 create policy "profile owner reads own profile" on public.profiles for select to authenticated using (id = (select auth.uid()));
+drop policy if exists "company reads selected candidate profile" on public.profiles;
+create policy "company reads selected candidate profile" on public.profiles for select to authenticated using ((select private.company_can_view_cv(id)));
 drop policy if exists "profile owner updates own profile" on public.profiles;
 create policy "profile owner updates own profile" on public.profiles for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));
 
@@ -323,6 +346,15 @@ drop policy if exists "candidate creates own public profile" on public.candidate
 create policy "candidate creates own public profile" on public.candidate_public_profiles for insert to authenticated with check (user_id = (select auth.uid()) and (select private.current_role()) = 'candidato');
 drop policy if exists "candidate updates own public profile" on public.candidate_public_profiles;
 create policy "candidate updates own public profile" on public.candidate_public_profiles for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()) and (select private.current_role()) = 'candidato');
+
+drop policy if exists "candidate or offer owner reads applications" on public.offer_applications;
+create policy "candidate or offer owner reads applications" on public.offer_applications for select to authenticated using (candidate_id = (select auth.uid()) or (select private.is_company_offer(offer_id)));
+drop policy if exists "candidate applies to active offer" on public.offer_applications;
+create policy "candidate applies to active offer" on public.offer_applications for insert to authenticated with check (candidate_id = (select auth.uid()) and (select private.current_role()) = 'candidato' and exists (select 1 from public.job_offers o where o.id = offer_id and o.is_active));
+drop policy if exists "company updates own offer applications" on public.offer_applications;
+create policy "company updates own offer applications" on public.offer_applications for update to authenticated using ((select private.current_role()) = 'empresa' and (select private.is_company_offer(offer_id))) with check ((select private.current_role()) = 'empresa' and (select private.is_company_offer(offer_id)));
+drop policy if exists "candidate withdraws own application" on public.offer_applications;
+create policy "candidate withdraws own application" on public.offer_applications for delete to authenticated using (candidate_id = (select auth.uid()) and (select private.current_role()) = 'candidato');
 
 drop policy if exists "active offers are public and owners see all" on public.job_offers;
 create policy "active offers are public and owners see all" on public.job_offers for select to anon, authenticated using (is_active or company_id = (select auth.uid()));
@@ -365,6 +397,19 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('rumbo-cvs', 'rumbo-cvs', false, 5000000, array['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
 on conflict (id) do update set public = false, file_size_limit = 5000000;
 
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('rumbo-avatars', 'rumbo-avatars', false, 2000000, array['image/jpeg','image/png','image/webp'])
+on conflict (id) do update set public = false, file_size_limit = 2000000;
+
+drop policy if exists "candidate manages own avatar" on storage.objects;
+create policy "candidate manages own avatar" on storage.objects for insert to authenticated with check (bucket_id = 'rumbo-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text and (select private.current_role()) = 'candidato');
+drop policy if exists "candidate updates own avatar" on storage.objects;
+create policy "candidate updates own avatar" on storage.objects for update to authenticated using (bucket_id = 'rumbo-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text and (select private.current_role()) = 'candidato') with check (bucket_id = 'rumbo-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text and (select private.current_role()) = 'candidato');
+drop policy if exists "interested company reads avatar" on storage.objects;
+create policy "interested company reads avatar" on storage.objects for select to authenticated using (bucket_id = 'rumbo-avatars' and ((storage.foldername(name))[1] = (select auth.uid())::text or (select private.can_company_view_candidate(((storage.foldername(name))[1])::uuid))));
+drop policy if exists "candidate deletes own avatar" on storage.objects;
+create policy "candidate deletes own avatar" on storage.objects for delete to authenticated using (bucket_id = 'rumbo-avatars' and (storage.foldername(name))[1] = (select auth.uid())::text and (select private.current_role()) = 'candidato');
+
 drop policy if exists "candidate manages own cv" on storage.objects;
 create policy "candidate manages own cv" on storage.objects for insert to authenticated with check (bucket_id = 'rumbo-cvs' and (storage.foldername(name))[1] = (select auth.uid())::text and (select private.current_role()) = 'candidato');
 drop policy if exists "candidate updates own cv" on storage.objects;
@@ -382,6 +427,7 @@ begin
     if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'offer_views') then alter publication supabase_realtime add table public.offer_views; end if;
     if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'offer_ratings') then alter publication supabase_realtime add table public.offer_ratings; end if;
     if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'candidate_pipeline') then alter publication supabase_realtime add table public.candidate_pipeline; end if;
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'offer_applications') then alter publication supabase_realtime add table public.offer_applications; end if;
     if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'candidate_public_profiles') then alter publication supabase_realtime add table public.candidate_public_profiles; end if;
   end if;
 end

@@ -41,7 +41,7 @@
     return {
       id: row.id,
       name: row.full_name || "",
-      email: session && session.user ? session.user.email : "",
+      email: row.contact_email || (session && session.user ? session.user.email : ""),
       role: row.role,
       phone: row.phone || "",
       city: row.city || "",
@@ -55,6 +55,7 @@
       languages: row.cv_languages || "",
       cvPath: row.cv_path || "",
       cvName: row.cv_name || "",
+      avatarPath: row.avatar_path || "",
       company: row.role === "empresa" ? companyData(row) : null
     };
   }
@@ -69,13 +70,18 @@
     var result = await client.from("profiles").select("*").eq("id", session.user.id).single();
     if (result.error) throw result.error;
     profile = mapProfile(result.data);
+    if (profile.role === "candidato") {
+      var candidatePublic = await client.from("candidate_public_profiles").select("avatar_path").eq("user_id", session.user.id).maybeSingle();
+      if (!candidatePublic.error && candidatePublic.data) profile.avatarPath = candidatePublic.data.avatar_path || "";
+    }
     profileCache(profile);
     return profile;
   }
 
   async function initialize() {
     if (!configured) {
-      profileCache(null);
+      // La cuenta de prueba usa el perfil local cuando aún no se ha conectado
+      // Supabase; no borrar esa sesión en cada cambio de página.
       return null;
     }
     var result = await client.auth.getSession();
@@ -84,7 +90,7 @@
   }
 
   var ready = initialize().catch(function (error) {
-    profileCache(null);
+    if (configured) profileCache(null);
     console.error("Rumbo could not load the account profile:", error);
     return null;
   });
@@ -190,7 +196,8 @@
       city: values.city || "",
       sector: values.sector || "",
       destination: values.destination || "",
-      bio: values.bio || ""
+      bio: values.bio || "",
+      avatar_path: profile && profile.avatarPath || ""
     }, { onConflict: "user_id" });
     if (publicResult.error) throw publicResult.error;
     profile = mapProfile(result.data);
@@ -249,6 +256,29 @@
     return profile;
   }
 
+  async function uploadAvatar(file) {
+    requireClient();
+    if (!session || !profile || profile.role !== "candidato") throw new Error("Inicia sesión como persona candidata para subir una foto.");
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 2000000) throw new Error("Elige una imagen JPG, PNG o WEBP de hasta 2 MB.");
+    var path = session.user.id + "/" + Date.now() + "-perfil." + (file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg");
+    var upload = await client.storage.from("rumbo-avatars").upload(path, file, { upsert: false, contentType: file.type });
+    if (upload.error) throw upload.error;
+    var publicResult = await client.from("candidate_public_profiles").upsert({ user_id: session.user.id, full_name: profile.name || "", city: profile.city || "", sector: profile.sector || "", destination: profile.destination || "", bio: profile.bio || "", avatar_path: path }, { onConflict: "user_id" });
+    if (publicResult.error) throw publicResult.error;
+    if (profile.avatarPath) await client.storage.from("rumbo-avatars").remove([profile.avatarPath]);
+    profile.avatarPath = path;
+    profileCache(profile);
+    return profile;
+  }
+
+  async function getMyAvatarUrl() {
+    requireClient();
+    if (!profile || !profile.avatarPath) return "";
+    var result = await client.storage.from("rumbo-avatars").createSignedUrl(profile.avatarPath, 900);
+    if (result.error) throw result.error;
+    return result.data.signedUrl;
+  }
+
   async function removeCv() {
     requireClient();
     if (!session || !profile || profile.role !== "candidato") throw new Error("Inicia sesión para eliminar el CV.");
@@ -276,9 +306,12 @@
     var result = await client.from("job_offers").select("*").order("created_at", { ascending: false });
     if (result.error) throw result.error;
     ratingCache = {};
+    var applicationStatusCache = {};
     if (session && profile && profile.role === "candidato") {
       var ratings = await client.from("offer_ratings").select("offer_id,stars").eq("candidate_id", session.user.id);
       if (!ratings.error) (ratings.data || []).forEach(function (rating) { ratingCache[rating.offer_id] = rating.stars; });
+      var applications = await client.from("offer_applications").select("offer_id,status").eq("candidate_id", session.user.id);
+      if (!applications.error) (applications.data || []).forEach(function (application) { applicationStatusCache[application.offer_id] = application.status; });
     }
     offerCache = (result.data || []).map(function (row) {
       var durations = row.contract_type === "corta" ? ["corta"] : ["larga"];
@@ -310,6 +343,7 @@
         favoritesCount: Number(row.favorites_count || 0),
         viewsCount: Number(row.views_count || 0),
         userRating: ratingCache[row.id] || 0,
+        applicationStatus: applicationStatusCache[row.id] || "",
         isActive: !!row.is_active,
         createdAt: row.created_at
       };
@@ -413,7 +447,8 @@
       client.from("job_offers").select("*").eq("company_id", session.user.id).order("created_at", { ascending: false }),
       client.from("offer_favorites").select("offer_id,candidate_id,created_at"),
       client.from("offer_views").select("offer_id,candidate_id,created_at"),
-      client.from("candidate_pipeline").select("offer_id,candidate_id,stage,updated_at")
+      client.from("candidate_pipeline").select("offer_id,candidate_id,stage,updated_at"),
+      client.from("offer_applications").select("offer_id,candidate_id,status,cover_note,created_at,updated_at")
     ]);
     results.forEach(function (result) { if (result.error) throw result.error; });
     var offers = (results[0].data || []).map(function (row) {
@@ -426,15 +461,64 @@
     var favorites = (results[1].data || []).filter(function (row) { return ownIds.indexOf(row.offer_id) !== -1; });
     var views = (results[2].data || []).filter(function (row) { return ownIds.indexOf(row.offer_id) !== -1; });
     var pipeline = (results[3].data || []).filter(function (row) { return ownIds.indexOf(row.offer_id) !== -1; });
+    var applications = (results[4].data || []).filter(function (row) { return ownIds.indexOf(row.offer_id) !== -1; });
     var candidateIds = [];
-    favorites.concat(views, pipeline).forEach(function (row) { if (candidateIds.indexOf(row.candidate_id) === -1) candidateIds.push(row.candidate_id); });
+    favorites.concat(views, pipeline, applications).forEach(function (row) { if (candidateIds.indexOf(row.candidate_id) === -1) candidateIds.push(row.candidate_id); });
     var candidateProfiles = {};
     if (candidateIds.length) {
-      var candidates = await client.from("candidate_public_profiles").select("user_id,full_name,city,sector,destination,bio").in("user_id", candidateIds);
+      var candidates = await client.from("candidate_public_profiles").select("user_id,full_name,city,sector,destination,bio,avatar_path").in("user_id", candidateIds);
       if (candidates.error) throw candidates.error;
-      (candidates.data || []).forEach(function (candidate) { candidateProfiles[candidate.user_id] = candidate; });
+      for (var candidate of (candidates.data || [])) {
+        var avatarUrl = "";
+        if (candidate.avatar_path) {
+          var signedAvatar = await client.storage.from("rumbo-avatars").createSignedUrl(candidate.avatar_path, 900);
+          if (!signedAvatar.error) avatarUrl = signedAvatar.data.signedUrl;
+        }
+        candidateProfiles[candidate.user_id] = Object.assign({}, candidate, { avatarUrl: avatarUrl });
+      }
     }
-    return { offers: offers, favorites: favorites, views: views, pipeline: pipeline, candidates: candidateProfiles };
+    return { offers: offers, favorites: favorites, views: views, pipeline: pipeline, applications: applications, candidates: candidateProfiles };
+  }
+
+  async function applyToOffer(offerId, coverNote) {
+    requireClient();
+    if (!session || !profile || profile.role !== "candidato") throw new Error("Inicia sesión como persona candidata para solicitar este puesto.");
+    var result = await client.from("offer_applications").insert({ offer_id: offerId, cover_note: coverNote || "" });
+    if (result.error && result.error.code !== "23505") throw result.error;
+    return true;
+  }
+
+  async function getCandidateDetail(candidateId, offerId) {
+    requireClient();
+    if (!session || !profile || profile.role !== "empresa") throw new Error("Esta ficha solo está disponible para una cuenta de empresa.");
+    var offer = await client.from("job_offers").select("id,company_id,title,company_name").eq("id", offerId).eq("company_id", session.user.id).single();
+    if (offer.error) throw new Error("No encontramos esta oferta en tu empresa.");
+    var results = await Promise.all([
+      client.from("candidate_public_profiles").select("user_id,full_name,city,sector,destination,bio,avatar_path").eq("user_id", candidateId).single(),
+      client.from("candidate_pipeline").select("stage").eq("offer_id", offerId).eq("candidate_id", candidateId).maybeSingle(),
+      client.from("offer_applications").select("status,cover_note,created_at").eq("offer_id", offerId).eq("candidate_id", candidateId).maybeSingle()
+    ]);
+    results.forEach(function (result) { if (result.error) throw result.error; });
+    var candidate = results[0].data;
+    var stage = results[1].data && results[1].data.stage || "";
+    var application = results[2].data || null;
+    var full = null;
+    if (stage === "proceso" || stage === "contratado") {
+      var profileResult = await client.from("profiles").select("contact_email,phone,cv_summary,cv_experience,cv_education,cv_skills,cv_languages,cv_path,cv_name").eq("id", candidateId).single();
+      if (profileResult.error) throw profileResult.error;
+      full = profileResult.data;
+    }
+    var avatarUrl = "";
+    if (candidate.avatar_path) {
+      var image = await client.storage.from("rumbo-avatars").createSignedUrl(candidate.avatar_path, 900);
+      if (!image.error) avatarUrl = image.data.signedUrl;
+    }
+    var cvUrl = "";
+    if (full && full.cv_path) {
+      var file = await client.storage.from("rumbo-cvs").createSignedUrl(full.cv_path, 300);
+      if (!file.error) cvUrl = file.data.signedUrl;
+    }
+    return { offer: offer.data, candidate: candidate, stage: stage, application: application, full: full, avatarUrl: avatarUrl, cvUrl: cvUrl };
   }
 
   async function setCandidateStage(offerId, candidateId, stage) {
@@ -442,6 +526,20 @@
     if (!session || !profile || profile.role !== "empresa") throw new Error("Inicia sesión como empresa para gestionar candidaturas.");
     var result = await client.from("candidate_pipeline").upsert({ offer_id: offerId, candidate_id: candidateId, stage: stage, updated_at: new Date().toISOString() }, { onConflict: "offer_id,candidate_id" });
     if (result.error) throw result.error;
+    var applicationStatus = stage === "contratado" ? "contratada" : "proceso";
+    var applicationUpdate = await client.from("offer_applications").update({ status: applicationStatus, updated_at: new Date().toISOString() }).eq("offer_id", offerId).eq("candidate_id", candidateId);
+    if (applicationUpdate.error) throw applicationUpdate.error;
+  }
+
+  async function setApplicationStatus(offerId, candidateId, status) {
+    requireClient();
+    if (!session || !profile || profile.role !== "empresa") throw new Error("Inicia sesión como empresa para gestionar solicitudes.");
+    var result = await client.from("offer_applications").update({ status: status, updated_at: new Date().toISOString() }).eq("offer_id", offerId).eq("candidate_id", candidateId);
+    if (result.error) throw result.error;
+    if (status === "descartada") {
+      var removed = await client.from("candidate_pipeline").delete().eq("offer_id", offerId).eq("candidate_id", candidateId);
+      if (removed.error) throw removed.error;
+    }
   }
 
   function subscribeTables(name, tables, callback) {
@@ -477,10 +575,15 @@
     recordView: recordView,
     rateOffer: rateOffer,
     getCompanyDashboard: getCompanyDashboard,
+    getCandidateDetail: getCandidateDetail,
+    applyToOffer: applyToOffer,
+    setApplicationStatus: setApplicationStatus,
+    uploadAvatar: uploadAvatar,
+    getMyAvatarUrl: getMyAvatarUrl,
     setCandidateStage: setCandidateStage,
     subscribeOffers: function (callback) { return subscribeTables("rumbo-offers-live", ["job_offers"], callback); },
     subscribeCandidateData: function (callback) { return subscribeTables("rumbo-candidate-live", ["offer_favorites", "offer_views", "offer_ratings", "job_offers"], callback); },
-    subscribeCompanyData: function (callback) { return subscribeTables("rumbo-company-live-" + (session && session.user ? session.user.id : "guest"), ["job_offers", "offer_favorites", "offer_views", "candidate_pipeline", "candidate_public_profiles"], callback); }
+    subscribeCompanyData: function (callback) { return subscribeTables("rumbo-company-live-" + (session && session.user ? session.user.id : "guest"), ["job_offers", "offer_favorites", "offer_views", "candidate_pipeline", "offer_applications", "candidate_public_profiles"], callback); }
   };
   window.RumboCloud = api;
 }());

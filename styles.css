@@ -118,14 +118,40 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
 .company-candidate-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .company-candidate-card { min-width: 0; padding: 19px; }
 .candidate-card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 13px; }
+.candidate-card-main { flex: 1; min-width: 0; }
+.profile-avatar { width: 54px; height: 54px; flex: 0 0 54px; border-radius: 50%; object-fit: cover; background: #eaf1fc; border: 1px solid var(--line); }
+.profile-avatar-placeholder { display: inline-flex; align-items: center; justify-content: center; color: var(--navy); font-weight: 800; font-size: 1.2rem; }
+.profile-avatar-large { width: 92px; height: 92px; flex-basis: 92px; font-size: 2rem; }
+.profile-photo-control { display: flex; align-items: center; gap: 18px; margin: 0 0 20px; }
+.profile-photo-control small { display: block; margin-top: 6px; color: var(--muted); }
 .candidate-card-heading h3 { margin: 10px 0 4px; }
 .candidate-offer-title { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.5; }
 .candidate-offer-title strong { color: #344a67; }
 .candidate-stage-mark { flex: 0 0 34px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: var(--sky); color: var(--blue); font-weight: 900; }
 .candidate-profile-line { margin: 15px 0 0; color: #435873; font-size: .83rem; font-weight: 700; }
 .candidate-profile-bio { margin: 8px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.6; }
-.candidate-card-actions { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--line); }
+.candidate-card-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--line); }
 .candidate-card-actions .button { min-height: 40px; padding-inline: 15px; font-size: .78rem; }
+.company-offers-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 28px 0 12px; }
+.company-offers-heading h3 { margin: 0; }
+.company-offers-list { display: grid; gap: 12px; }
+.company-offer-row { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.25fr) auto; align-items: center; gap: 18px; padding: 19px; }
+.company-offer-row h3 { margin: 8px 0 3px; }
+.company-offer-row p { margin: 0; color: var(--muted); font-size: .9rem; }
+.company-offer-impact { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; font-size: .82rem; color: var(--muted); }
+.company-offer-impact strong { color: var(--navy); }
+.candidate-detail-area { padding-bottom: 64px; }
+.candidate-detail-card { padding: clamp(22px, 4vw, 40px); }
+.candidate-detail-heading { display: flex; align-items: center; gap: 20px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.candidate-detail-heading h2 { margin: 9px 0 3px; }
+.candidate-detail-heading p { margin: 0; color: var(--muted); }
+.candidate-detail-bio { max-width: 75ch; margin: 22px 0; line-height: 1.7; }
+.candidate-detail-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.candidate-detail-section { padding: 17px; border: 1px solid var(--line); border-radius: 15px; }
+.candidate-detail-section h3 { margin: 0 0 8px; font-size: 1rem; }
+.candidate-detail-section p { margin: 0; color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+.candidate-detail-private { margin-top: 20px; }
+.candidate-detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
 .company-candidates-area > .disclaimer { margin-top: 16px; }
 .offer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .save-offer { border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; background: white; color: var(--blue); font-size: .76rem; font-weight: 750; cursor: pointer; }
@@ -351,6 +377,7 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
   .company-profile-summary { align-items: flex-start; flex-direction: column; }
   .company-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .company-candidate-list { grid-template-columns: 1fr; }
+  .company-offer-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
   .wrap { width: min(100% - 32px, 560px); }
@@ -381,6 +408,10 @@ h3 { font: 750 1.15rem/1.25 Manrope, sans-serif; letter-spacing: -.035em; color:
   .company-metrics-grid { grid-template-columns: 1fr 1fr; }
   .company-candidate-filters { align-items: stretch; flex-direction: column; }
   .company-candidate-filters button { justify-content: space-between; }
+  .candidate-detail-sections { grid-template-columns: 1fr; }
+  .candidate-detail-heading { align-items: flex-start; flex-wrap: wrap; }
+  .profile-photo-control { align-items: flex-start; flex-direction: column; }
+  .company-offers-heading { align-items: flex-start; flex-direction: column; }
   .role-select { grid-template-columns: 1fr 1fr; }
   .role-option span { min-height: 86px; padding: 10px; }
   .social-row { grid-template-columns: 1fr; }
